@@ -21,6 +21,11 @@ const merge       = require("lodash").merge;
 const tsTask = require("./gulp/typescript");
 const sassTask = require("./gulp/sass");
 
+gulp.task("sass", () =>
+{
+    return sassTask.task(gulp.src(sassTask.files));
+})
+
 gulp.task("ts:server", () =>
 {
     return tsTask.task("server", gulp.src(tsTask.serverFiles));
@@ -33,13 +38,26 @@ gulp.task("ts:browser", () =>
 
 gulp.task("ts", ["ts:server", "ts:browser"]);
 
-gulp.task("default", ["ts"]);
+gulp.task("default", ["ts", "sass"]);
 
 gulp.task("watch", ["default"], (cb) =>
 {
     server.listen({path: "bin/server.js"});
     
-    gulp.watch("bin/**/*.js", server.restart);
+    gulp.watch(["bin/**/*.js", "gearworks.private.json"], server.restart);
+    
+    gulp.watch(sassTask.files, (event) =>
+    {
+        console.log('Sass file ' + event.path + ' was changed.');
+        
+        if (event.path.indexOf("_variables.scss") > -1)
+        {
+            //Recompile all sass files with updated variables.
+            return sassTask.task(gulp.src(sassFiles));
+        }
+        
+        return sassTask.task(gulp.src(event.path));
+    })
     
     gulp.watch(tsTask.serverFiles, (event) =>
     {

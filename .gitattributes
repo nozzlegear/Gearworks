@@ -1,6 +1,8 @@
 # Override GitHub's automatic language detection.
 
 gulpfile.js linguist-vendored
+gulp/ linguist-vendored
+gulp/* linguist-vendored
 bin/ linguist-vendored
 css linguist-vendored
 css/ linguist-vendored

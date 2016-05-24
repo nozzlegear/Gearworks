@@ -1,0 +1,7 @@
+{
+    "appName":              "Gearworks",
+    "shopifyApiKey":        "abcdefg",
+    "shopifySecretKey":     "abcdefg",
+    "stripeSecretKey":      "abcdefg",
+    "stripePublishableKey": "abcdefg"
+}

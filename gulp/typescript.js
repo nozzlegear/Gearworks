@@ -32,6 +32,10 @@ const findTsDir = (outputPath, isSingleFilePath) =>
     // Support multiple source directories:
     const patterns = [
         {
+            startsWith: "modules",
+            replaceWith: `bin${path.sep}modules`  
+        },
+        {
             startsWith: "routes",
             replaceWith: `bin${path.sep}routes`
         },

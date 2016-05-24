@@ -49,6 +49,7 @@
     "webpack-stream": "^3.2.0"
   },
   "dependencies": {
+    "bcrypt": "^0.8.6",
     "bluebird": "^3.4.0",
     "boom": "^3.2.0",
     "firebase": "^3.0.2",
@@ -58,6 +59,7 @@
     "inert": "^4.0.0",
     "joi": "^8.1.0",
     "lodash": "^4.12.0",
+    "node-uuid": "^1.4.7",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
     "sitemap": "^1.6.0",
