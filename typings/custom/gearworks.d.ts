@@ -28,4 +28,34 @@ declare module "gearworks"
             isAuthenticated: boolean;
         }
     }
+    
+    export interface User
+    {
+        id: string | number;
+        
+        /**
+         * The user's username or email address.
+         */
+        username: string;
+        
+        /**
+         * The user's hashed password.
+         */
+        hashedPassword: string;
+        
+        /**
+         * An access token for the user's store.
+         */
+        shopifyAccessToken?: string;
+        
+        /**
+         * The user's Shopify shop domain.
+         */
+        shopifyDomain?: string;
+        
+        /**
+         * The name of the user's Shopify shop.
+         */
+        shopifyShop?: string;
+    }
 }
