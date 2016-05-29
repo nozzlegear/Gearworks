@@ -14,3 +14,7 @@ Note: docs are incomplete and only serve as notes for the real documentation onc
 
 1. Force all login requests to a secure domain (i.e. http**s**://mydomain.com).
 2. Disable secure cookies by setting the yar plugin's `isSecure` option to `false` in `server.ts`.
+
+## Building Gearworks
+
+- Gearworks requires a PouchDB-compatible database. For development, Gearworks assumes that you have [pouchdb-server](https://github.com/pouchdb/pouchdb-server) installed globally via NPM.
