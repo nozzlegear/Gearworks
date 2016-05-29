@@ -4,10 +4,10 @@ import * as boom from "boom";
 import * as bcrypt from "bcrypt";
 import {Request} from "hapi";
 import {v4 as guid} from "node-uuid";
-import {Server, DefaultContext} from "gearworks";
+import {Server, DefaultContext, User} from "gearworks";
 
-export const schemeName = "cookie";
-export const strategyName = "simple";
+export const basicStrategyName = "basic-auth";
+export const fullStrategyName = "full-auth";
 export const cookieName = "GearworksAuth"; 
 export const yarSalt: string = process.env.yarSalt;
 export const encryptionSignature = process.env.encryptionSignature;
@@ -16,6 +16,9 @@ export type authCookie = {
     userId: string;
     username: string;
     encryptionSignature: string;
+    shopName: string;
+    shopDomain: string;
+    shopToken: string;
 }
 
 export function configureAuth(server: Server)
@@ -44,14 +47,17 @@ export function configureAuth(server: Server)
         return reply.continue();
     })
     
-    server.auth.scheme(schemeName, (server, options) =>
+    const basicSchemeName = "basic";
+    const fullSchemeName = "full";
+    
+    server.auth.scheme(basicSchemeName, (server, options) =>
     {
         return {
-            authenticate: (request, reply) => 
+            authenticate: (request, reply) =>
             {
-                const cookie: authCookie = request.yar.get(cookieName, false);
+                const cookie = getAuthCookie(request);
                 
-                if (!cookie || ! bcrypt.compareSync(encryptionSignature, cookie.encryptionSignature))
+                if (!cookie)
                 {
                     const response = request.generateResponse().redirect("/auth/login");
                     
@@ -59,10 +65,35 @@ export function configureAuth(server: Server)
                     return reply(null, response);
                 }
                 
-                let result = {
-                    credentials: {
-                        userId: cookie.userId,
-                    }
+                const result = getAuthCookieData(cookie);
+                
+                return reply.continue(result);
+            }
+        }
+    })
+    
+    server.auth.scheme(fullSchemeName, (server, options) =>
+    {
+        return {
+            authenticate: (request, reply) => 
+            {
+                const cookie = getAuthCookie(request);
+                
+                if (!cookie)
+                {
+                    const response = request.generateResponse().redirect("/auth/login");
+                    
+                    // Response is ignored if error is passed in as first param
+                    return reply(null, response);
+                }
+                
+                const result = getAuthCookieData(cookie);
+                
+                if (!result.artifacts.shopToken)
+                {
+                    const response = request.generateResponse().redirect("/setup");
+                    
+                    return reply(null, response, result);
                 }
                 
                 return reply.continue(result);
@@ -70,18 +101,55 @@ export function configureAuth(server: Server)
         }
     })
     
-    const authenticateAllRoutes = true;
+    const isDefaultStrategy = true;
     
-    server.auth.strategy(strategyName, schemeName, authenticateAllRoutes);
+    server.auth.strategy(fullStrategyName, fullSchemeName, isDefaultStrategy);
+    server.auth.strategy(basicStrategyName, basicSchemeName, false);
 }
 
-export function setAuthCookie(request: Request, userId: string, username: string)
+export function getAuthCookieData(cookie: authCookie)
+{
+    let result = {
+        credentials: {
+            username: cookie.username,
+            userId: cookie.userId,
+        },
+        artifacts: {
+            shopName: cookie.shopName,
+            shopDomain: cookie.shopDomain,
+            shopToken: cookie.shopToken
+        }
+    };
+    
+    return result;
+}
+
+/**
+ * Attempts to get the user's auth cookie, ensuring it has a matching encryption signature. 
+ * Returns undefined if the cookie isn't found or doesn't have a matching signature.
+ */
+export function getAuthCookie(request: Request)
+{
+    const cookie: authCookie = request.yar.get(cookieName, false);
+    
+    if (!cookie || ! bcrypt.compareSync(encryptionSignature, cookie.encryptionSignature))
+    {
+        return undefined;
+    }
+    
+    return cookie as authCookie;
+}
+
+export function setAuthCookie(request: Request, user: User)
 {
     const hash = bcrypt.hashSync(encryptionSignature, 10);
     
     return request.yar.set(cookieName, {
         encryptionSignature: hash,
-        userId: userId,
-        username: username,
+        userId: user._id,
+        username: user.username,
+        shopDomain: user.shopifyDomain,
+        shopName: user.shopifyShop,
+        shopToken: user.shopifyAccessToken
     } as authCookie)
 }

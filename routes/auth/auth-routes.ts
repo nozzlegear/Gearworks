@@ -121,7 +121,7 @@ export async function login(server: Server, request: Request, reply: IReply)
     }
     
     //Successful login
-    setAuthCookie(request, user._id, user.username);
+    setAuthCookie(request, user);
     
     return reply.redirect("/");
 }
@@ -198,7 +198,7 @@ export async function register(server: Server, request: Request, reply: IReply):
     }
     
     //Log the user in
-    await setAuthCookie(request, user._id, user.username);
+    await setAuthCookie(request, user);
     
     return reply.redirect("/setup");
 }

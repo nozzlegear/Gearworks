@@ -5,6 +5,7 @@ import * as boom from "boom";
 import * as pouch from "pouchdb";
 import {Request, IReply} from "hapi";
 import {Server, User} from "gearworks";
+import {basicStrategyName} from "../../modules/auth";
 import {IProps as SetupProps} from "../../views/setup/setup";
 
 export function registerRoutes(server: Server)
@@ -12,6 +13,9 @@ export function registerRoutes(server: Server)
     server.route({
         method: "GET",
         path: "/setup",
+        config: {
+            auth: basicStrategyName,
+        },
         handler: {
             async: (request, reply) => getSetupForm(server, request, reply)
         }
