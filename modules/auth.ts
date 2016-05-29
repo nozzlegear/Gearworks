@@ -13,7 +13,7 @@ export const yarSalt: string = process.env.yarSalt;
 export const encryptionSignature = process.env.encryptionSignature;
 
 export type authCookie = {
-    userId: string | number;
+    userId: string;
     username: string;
     encryptionSignature: string;
 }
@@ -62,7 +62,6 @@ export function configureAuth(server: Server)
                 let result = {
                     credentials: {
                         userId: cookie.userId,
-                        username: cookie.username
                     }
                 }
                 
@@ -76,13 +75,13 @@ export function configureAuth(server: Server)
     server.auth.strategy(strategyName, schemeName, authenticateAllRoutes);
 }
 
-export function setAuthCookie(request: Request, userId: string | number, username: string)
+export function setAuthCookie(request: Request, userId: string, username: string)
 {
     const hash = bcrypt.hashSync(encryptionSignature, 10);
     
     return request.yar.set(cookieName, {
         encryptionSignature: hash,
         userId: userId,
-        username: username
+        username: username,
     } as authCookie)
 }

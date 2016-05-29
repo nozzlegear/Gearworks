@@ -1,13 +1,13 @@
 {
   "name": "gearworks",
   "dependencies": {
+    "bluebird": "registry:npm/bluebird#3.3.4+20160515010139",
     "lodash": "registry:npm/lodash#4.0.0+20160416211519",
     "node-uuid": "registry:npm/node-uuid#1.4.7+20160503013124"
   },
   "globalDependencies": {
     "bcrypt": "registry:dt/bcrypt#0.0.0+20160316155526",
     "boom": "registry:dt/boom#0.0.0+20160317120654",
-    "firebase": "registry:dt/firebase#2.4.1+20160412125105",
     "hapi": "registry:dt/hapi#13.0.0+20160521152637",
     "joi": "registry:dt/joi#9.0.0+20160514175131",
     "node": "registry:dt/node#6.0.0+20160523035754",

@@ -1,6 +1,7 @@
 declare module "gearworks"
 {
     import {Server as HapiServer} from "hapi";
+    import * as pouch from "pouchdb";
     
     export interface Server extends HapiServer
     {
@@ -29,10 +30,8 @@ declare module "gearworks"
         }
     }
     
-    export interface User
-    {
-        id: string | number;
-        
+    export interface User extends pouch.api.methods.ExistingDoc
+    {        
         /**
          * The user's username or email address.
          */

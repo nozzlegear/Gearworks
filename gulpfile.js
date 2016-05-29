@@ -1,11 +1,13 @@
 "use strict";
 
 const gulp        = require("gulp");
+const chokidar    = require("chokidar");
+const shell       = require("gulp-shell");
 const server      = require("gulp-develop-server");
 
 //Tasks
-const tsTask = require("./gulp/typescript");
 const sassTask = require("./gulp/sass");
+const tsTask = require("./gulp/typescript");
 
 gulp.task("sass", () =>
 {
@@ -30,32 +32,39 @@ gulp.task("watch", ["default"], (cb) =>
 {
     server.listen({path: "bin/server.js"});
     
-    gulp.watch(["bin/**/*.js", "gearworks.private.json"], server.restart);
-    
-    gulp.watch(sassTask.files, (event) =>
+    // Gulp.watch in 3.x is broken, watching more files than it should. Using chokidar instead.
+    // https://github.com/gulpjs/gulp/issues/651
+    chokidar.watch(["bin/**/*.js", "gearworks.private.json"], {ignoreInitial: true}).on("all", (event, path) =>
     {
-        console.log('Sass file ' + event.path + ' was changed.');
+        server.restart();
+    });
+
+    chokidar.watch(sassTask.files, {ignoreInitial: true}).on("all", (event, path) =>
+    {
+        console.log(`${event}: Sass file ${path}`);
         
-        if (event.path.indexOf("_variables.scss") > -1)
+        if (path.indexOf("_variables.scss") > -1)
         {
             //Recompile all sass files with updated variables.
             return sassTask.task(gulp.src(sassFiles));
         }
         
-        return sassTask.task(gulp.src(event.path));
+        return sassTask.task(gulp.src(path));
     })
     
-    gulp.watch(tsTask.serverFiles, (event) =>
+    chokidar.watch(tsTask.serverFiles, {ignoreInitial: true}).on("all", (event, path) =>
     {
-        console.log(`TS server file ${event.path} changed.`)
+        console.log(`${event}: TS server file ${path}`);
         
-        return tsTask.task("server", gulp.src(event.path), event.path);
+        return tsTask.task("server", gulp.src(path), path);
     })
     
-    gulp.watch(tsTask.browserFiles, (event) =>
+    chokidar.watch(tsTask.browserFiles, {ignoreInitial: true}).on("all", (event, path) =>
     {
-        console.log(`TS browser file ${event.path} changed.`)
+        console.log(`${event}: TS browser file ${path}`);
         
-        return tsTask.task("browser", gulp.src(event.path), event.path);
+        return tsTask.task("browser", gulp.src(path), path);
     })
+    
+    shell.task("pouchdb-server -n --dir pouchdb --port 5984")();
 })

@@ -29,7 +29,10 @@ export default function Nav(props: DefaultContext)
                     <ul className="nav navbar-nav navbar-right">
                         {
                             !props.user.isAuthenticated ?
-                            <li><a href="/auth/login">{"Sign in"}</a></li> :
+                            [
+                                <li key="register-link"><a href="/auth/register">{"Create account"}</a></li>,
+                                <li key="sign-in-link"><a href="/auth/login">{"Sign in"}</a></li>,
+                            ] :
                             <li className="dropdown">
                                 <a aria-expanded="false" className="dropdown-toggle" data-toggle="dropdown" href="#" id="themes">
                                     {`${props.user.username} `}

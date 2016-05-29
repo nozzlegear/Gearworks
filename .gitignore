@@ -38,3 +38,8 @@ wwwroot/
 
 # Ignore private files
 *.private.json
+
+# Ignore pouchdb files
+log.txt
+pouchdb/
+config.json

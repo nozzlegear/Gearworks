@@ -116,5 +116,5 @@ const tsTask = (type, gulpSrc, singleFileSrcPath) =>
 }
 
 module.exports.task         = tsTask;
-module.exports.browserFiles = ["js/**/*.ts"];
-module.exports.serverFiles  = ["server.ts", "modules/**/*.ts", "routes/**/*.ts", "views/**/*.{ts,tsx}"];
+module.exports.browserFiles = ["./js/**/*.ts"];
+module.exports.serverFiles  = ["./server.ts", "./modules/**/*.ts", "./routes/**/*.ts", "./views/**/*.{ts,tsx}"];
