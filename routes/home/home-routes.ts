@@ -1,8 +1,8 @@
 /// <reference path="./../../typings/typings.d.ts" />
 
-import {Server} from "gearworks";
 import {Request, IReply} from "hapi";
 import {IProps} from "./../../views/home/home";
+import {Server, AuthCredentials, AuthArtifacts} from "gearworks";
 
 export function registerRoutes(server: Server)
 {

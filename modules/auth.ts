@@ -4,7 +4,7 @@ import * as boom from "boom";
 import * as bcrypt from "bcrypt";
 import {Request} from "hapi";
 import {v4 as guid} from "node-uuid";
-import {Server, DefaultContext, User} from "gearworks";
+import {Server, DefaultContext, User, AuthArtifacts, AuthCredentials} from "gearworks";
 
 export const basicStrategyName = "basic-auth";
 export const fullStrategyName = "full-auth";
@@ -19,6 +19,7 @@ export type authCookie = {
     shopName: string;
     shopDomain: string;
     shopToken: string;
+    planId: string;
 }
 
 export function configureAuth(server: Server)
@@ -96,6 +97,13 @@ export function configureAuth(server: Server)
                     return reply(null, response, result);
                 }
                 
+                if (!result.artifacts.planId)
+                {
+                    const response = request.generateResponse().redirect("/setup/plans");
+                    
+                    return reply(null, response, result);
+                }
+                
                 return reply.continue(result);
             }
         }
@@ -109,16 +117,17 @@ export function configureAuth(server: Server)
 
 export function getAuthCookieData(cookie: authCookie)
 {
-    let result = {
+    const result = {
         credentials: {
             username: cookie.username,
             userId: cookie.userId,
-        },
+        } as AuthCredentials,
         artifacts: {
             shopName: cookie.shopName,
             shopDomain: cookie.shopDomain,
-            shopToken: cookie.shopToken
-        }
+            shopToken: cookie.shopToken,
+            planId: cookie.planId,
+        } as AuthArtifacts,
     };
     
     return result;
@@ -140,6 +149,9 @@ export function getAuthCookie(request: Request)
     return cookie as authCookie;
 }
 
+/**
+ * Sets an auth cookie, e.g. after logging in or updating an auth cookie property.
+ */
 export function setAuthCookie(request: Request, user: User)
 {
     const hash = bcrypt.hashSync(encryptionSignature, 10);
@@ -150,6 +162,7 @@ export function setAuthCookie(request: Request, user: User)
         username: user.username,
         shopDomain: user.shopifyDomain,
         shopName: user.shopifyShop,
-        shopToken: user.shopifyAccessToken
+        shopToken: user.shopifyAccessToken,
+        planId: user.planId,
     } as authCookie)
 }

@@ -30,6 +30,44 @@ declare module "gearworks"
         }
     }
     
+    export interface AuthCredentials
+    {
+        username: string;
+        userId: string;
+    }
+    
+    export interface AuthArtifacts
+    {
+        shopName: string;
+        shopDomain: string;
+        shopToken: string;
+        planId: string;
+    }
+    
+    export interface Plan
+    {
+        /**
+         * A plan's unique id.
+         */
+        id: string;
+        
+        name: string;
+        
+        price: number;
+        
+        interval: "month" | "year";
+        
+        /**
+         * A humanized description that will be displayed on the pricing page.
+         */
+        description: string;
+        
+        /**
+         * A custom list of in-app permissions available to this plan.
+         */
+        permissions: string[];
+    }
+    
     export interface User extends pouch.api.methods.ExistingDoc
     {        
         /**
@@ -56,5 +94,10 @@ declare module "gearworks"
          * The name of the user's Shopify shop.
          */
         shopifyShop?: string;
+        
+        /**
+         * The user's plan id.
+         */
+        planId?: string;
     }
 }
