@@ -5,7 +5,7 @@ import * as joi from "joi";
 import * as boom from "boom";
 import * as path from "path"; 
 import * as util from "util";
-import {RoutesToRegister} from "./routes";
+import {RoutesToRegister} from "./routes/index";
 import {defaults, isError, merge} from "lodash";
 import {Server, ServerApp, DefaultContext} from "gearworks";
 import {IProps as ErrorPageProps} from "./views/errors/error";

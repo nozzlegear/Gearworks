@@ -7,6 +7,7 @@ import {Request, IReply} from "hapi";
 import {Server, User} from "gearworks";
 import {basicStrategyName} from "../../modules/auth";
 import {IProps as SetupProps} from "../../views/setup/setup";
+import {isValidShopifyDomain} from "shopify-prime";
 
 export function registerRoutes(server: Server)
 {
