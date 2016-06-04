@@ -4,7 +4,7 @@
     "src": "D:\\source\\gearworks\\node_modules\\shopify-prime\\typings.json",
     "raw": "npm:shopify-prime",
     "main": "dist/index.d.ts",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "global": false,
     "dependencies": {
       "jsuri": {
