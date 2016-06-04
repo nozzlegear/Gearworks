@@ -12,10 +12,8 @@ export interface IProps extends LayoutProps
 
 export default function LoginPage(props: IProps & DefaultContext)
 {
-    const styles = ["/wwwroot/css/login.min.css"];
-    
     return (
-        <Layout {...props} css={styles}>
+        <Layout {...props}>
             <section id="login">
                 <h1 className="page-title">{props.title}</h1>
                 <div className="row">
