@@ -1,11 +1,27 @@
 declare module "gearworks"
 {
-    import {Server as HapiServer} from "hapi";
     import * as pouch from "pouchdb";
+    import {Server as HapiServer, Request as HapiRequest} from "hapi";
     
     export interface Server extends HapiServer
     {
         app: ServerApp;
+    }
+    
+    export interface Request extends HapiRequest
+    {
+		auth: {
+			/** true is the request has been successfully authenticated, otherwise false.*/
+			isAuthenticated: boolean;
+			/**  the credential object received during the authentication process. The presence of an object does not mean successful authentication.  can be set in the validate function's callback.*/
+			credentials: AuthCredentials;
+			/**  an artifact object received from the authentication strategy and used in authentication-related actions.*/
+			artifacts: AuthArtifacts;
+			/**  the route authentication mode.*/
+			mode: any;
+			/** the authentication error is failed and mode set to 'try'.*/
+			error: any;
+		};
     }
     
     export interface ServerApp

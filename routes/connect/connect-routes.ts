@@ -1,11 +1,11 @@
 /// <reference path="./../../typings/index.d.ts" />
 
-import {Request, IReply} from "hapi";
+import {IBoom, IReply, Response} from "hapi";
 import {users} from "../../modules/database";
+import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
-import {Server, AuthCredentials, User} from "gearworks";
-import {isAuthenticRequest, authorize} from "shopify-prime";
-import {basicStrategyName, setAuthCookie} from "../../modules/auth";
+import {basicStrategyName, setAuthCookie, shopifyRequestStrategyName} from "../../modules/auth";
+import {isAuthenticRequest, authorize, RecurringCharges, RecurringCharge, ShopifyError} from "shopify-prime";
 
 export function registerRoutes(server: Server)
 {
@@ -13,29 +13,36 @@ export function registerRoutes(server: Server)
         method: "GET",
         path: "/connect/shopify",
         config: {
-            auth: basicStrategyName
+            auth: {
+                strategies: [basicStrategyName, shopifyRequestStrategyName],
+            }
         },
         handler: {
-            async: (request, reply) => connectShopify(server, request, reply)
+            async: (request, reply) => connectShopify(server, request, reply),
+        }
+    });
+    
+    server.route({
+        method: "GET",
+        path: "/connect/shopify/activate",
+        config: {
+            auth: {
+                strategies: [basicStrategyName, shopifyRequestStrategyName],
+            }
+        },
+        handler: {
+            async: (request, reply) => activateShopifyPlan(server, request, reply),
         }
     })
 }
 
-export async function connectShopify(server: Server, request: Request, reply: IReply): Promise<any>
+export async function connectShopify(server: Server, request: Request, reply: IReply): Promise<IBoom | Response>
 {
-    const credentials: AuthCredentials = request.auth.credentials;
-    const query: {code: string, shop: string, hmac: string, localRedirect?: string} = request.query;
-    const isAuthentic = isAuthenticRequest(query, server.app.shopifySecretKey);
-    
-    if (!isAuthentic)
-    {
-        return reply(badRequest("Request did not pass validation."));
-    }
-    
+    const query: {code: string, shop: string, hmac: string} = request.query;
     const accessToken = await authorize(query.code, query.shop, server.app.shopifyApiKey, server.app.shopifySecretKey);
     
     // Grab the user model from the database to update it
-    let user = await users.get(credentials.userId) as User;
+    let user = await users.get(request.auth.credentials.userId) as User;
     
     // TODO: Use Shopify Prime to get the shop name
     user.shopifyDomain = query.shop;
@@ -54,8 +61,33 @@ export async function connectShopify(server: Server, request: Request, reply: IR
     // Update the user's auth token
     setAuthCookie(request, user);
     
-    //Figure out where to redirect the user
-    const path = query.localRedirect || "/";
+    return reply.redirect("/");
+}
+
+export async function activateShopifyPlan(server: Server, request: Request, reply: IReply)
+{
+    const query: {shop: string, hmac: string, charge_id: number} = request.query;
+    const artifacts = request.auth.artifacts;
+    const service = new RecurringCharges(artifacts.shopDomain, artifacts.shopToken);
+    let charge: RecurringCharge;
     
-    return reply.redirect(path);
+    try
+    {
+        charge = await service.get(query.charge_id);
+        
+        if (charge.status !== "accepted")
+        {
+            //Charges can only be activated when they've been accepted
+            throw new Error(`Charge status was ${charge.status}`);
+        }
+    }
+    catch (e)
+    {
+        console.error("Recurring charge error", e);
+        
+        // Charge has expired or was declined. Send the user to select a new plan.
+        return reply.redirect("/setup/plans");
+    }
+    
+    //await service.activate(charge.)
 }

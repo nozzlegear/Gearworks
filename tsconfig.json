@@ -6,8 +6,7 @@
         "sourceMap": false,
         "outDir": "bin",
         "jsx": "react",
-        "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "classic"
+        "forceConsistentCasingInFileNames": true
     },
     "exclude": [
         "node_modules",

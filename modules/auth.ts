@@ -4,11 +4,13 @@ import * as boom from "boom";
 import * as bcrypt from "bcrypt";
 import {Request} from "hapi";
 import {v4 as guid} from "node-uuid";
+import {isAuthenticRequest} from "shopify-prime";
 import {Server, DefaultContext, User, AuthArtifacts, AuthCredentials} from "gearworks";
 
-export const basicStrategyName = "basic-auth";
-export const fullStrategyName = "full-auth";
 export const cookieName = "GearworksAuth"; 
+export const fullStrategyName = "full-auth";
+export const basicStrategyName = "basic-auth";
+export const shopifyRequestStrategyName = "shopify-request-auth";
 export const yarSalt: string = process.env.yarSalt;
 export const encryptionSignature = process.env.encryptionSignature;
 
@@ -48,8 +50,26 @@ export function configureAuth(server: Server)
         return reply.continue();
     })
     
-    const basicSchemeName = "basic";
     const fullSchemeName = "full";
+    const basicSchemeName = "basic";
+    const shopifyRequestSchemeName = "shopify-request";
+    
+    server.auth.scheme(shopifyRequestSchemeName, (server, options) =>
+    {
+        return {
+            authenticate: async (request, reply) =>
+            {
+                const isAuthentic = await isAuthenticRequest(request.query, server.app.shopifySecretKey);
+
+                if (!isAuthentic)
+                {
+                    return reply(boom.badRequest("Request did not pass validation."));
+                }
+                
+                return reply.continue(request.auth.credentials);
+            }
+        }
+    });
     
     server.auth.scheme(basicSchemeName, (server, options) =>
     {
@@ -109,10 +129,9 @@ export function configureAuth(server: Server)
         }
     })
     
-    const isDefaultStrategy = true;
-    
-    server.auth.strategy(fullStrategyName, fullSchemeName, isDefaultStrategy);
     server.auth.strategy(basicStrategyName, basicSchemeName, false);
+    server.auth.strategy(shopifyRequestStrategyName, shopifyRequestSchemeName, false);
+    server.auth.strategy(fullStrategyName, fullSchemeName, true /* Default strategy for all requests */);
 }
 
 export function getAuthCookieData(cookie: authCookie)
