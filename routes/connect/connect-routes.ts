@@ -2,6 +2,7 @@
 
 import {IBoom, IReply, Response} from "hapi";
 import {users} from "../../modules/database";
+import {findPlan} from "../../modules/plans";
 import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
 import {basicStrategyName, setAuthCookie, shopifyRequestStrategyName} from "../../modules/auth";
@@ -67,7 +68,8 @@ export async function connectShopify(server: Server, request: Request, reply: IR
 
 export async function activateShopifyPlan(server: Server, request: Request, reply: IReply)
 {
-    const query: {shop: string, hmac: string, charge_id: number} = request.query;
+    const query: {shop: string, hmac: string, charge_id: number, plan_id: string} = request.query;
+    const plan = findPlan(query.plan_id);
     const artifacts = request.auth.artifacts;
     const service = new RecurringCharges(artifacts.shopDomain, artifacts.shopToken);
     let charge: RecurringCharge;
@@ -90,5 +92,20 @@ export async function activateShopifyPlan(server: Server, request: Request, repl
         return reply.redirect("/setup/plans");
     }
     
-    //await service.activate(charge.)
+    await service.activate(charge.id);
+    
+    // Update the user's planid
+    let user = await users.get(request.auth.credentials.userId) as User;
+    user.planId = plan.id;
+    
+    const update = await users.put(user);
+    
+    if (!update.ok)
+    {
+        throw new Error("Activated user plan but failed to save plan id.");
+    }
+    
+    setAuthCookie(request, user);
+    
+    return reply.redirect("/");
 }

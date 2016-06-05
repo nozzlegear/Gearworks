@@ -156,7 +156,7 @@ export async function selectPlan(server: Server, request: Request, reply: IReply
     }
     
     payload = validation.value;
-    
+
     const plan = findPlan(payload.planId);
     const artifacts = request.auth.artifacts;
     const service = new RecurringCharges(artifacts.shopDomain, artifacts.shopToken); 
@@ -165,7 +165,7 @@ export async function selectPlan(server: Server, request: Request, reply: IReply
         price: plan.price,
         test: !server.app.isLive,
         trial_days: 0,
-        return_url: (getRequestDomain(request) + "/connect/shopify/activate").toLowerCase(),
+        return_url: (getRequestDomain(request) + `/connect/shopify/activate?plan_id=${plan.id}`).toLowerCase(),
     });
     
     //Send the user to the confirmation url

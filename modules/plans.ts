@@ -49,5 +49,10 @@ export function findPlan(id: string)
 {
     const plan = find(plans, p => p.id === id) || find(retiredPlans, p => p.id === id);
     
+    if (!plan)
+    {
+        throw new Error(`Unable to find plan with id of ${id}.`);
+    }
+    
     return plan;
 }
