@@ -5,7 +5,7 @@ import {users} from "../../modules/database";
 import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
 import {basicStrategyName, setAuthCookie, shopifyRequestStrategyName} from "../../modules/auth";
-import {isAuthenticRequest, authorize, RecurringCharges, RecurringCharge, ShopifyError} from "shopify-prime";
+import {isAuthenticRequest, authorize, RecurringCharges, RecurringCharge, ShopifyError, Shops} from "shopify-prime";
 
 export function registerRoutes(server: Server)
 {
@@ -41,13 +41,14 @@ export async function connectShopify(server: Server, request: Request, reply: IR
     const query: {code: string, shop: string, hmac: string} = request.query;
     const accessToken = await authorize(query.code, query.shop, server.app.shopifyApiKey, server.app.shopifySecretKey);
     
-    // Grab the user model from the database to update it
+    // Grab the user's shopname and their database record
+    const shopName = (await new Shops(query.shop, accessToken).get({fields: ["name"]})).name;
     let user = await users.get(request.auth.credentials.userId) as User;
     
-    // TODO: Use Shopify Prime to get the shop name
+    // Store the user's shop data
     user.shopifyDomain = query.shop;
     user.shopifyAccessToken = accessToken;
-    user.shopifyShop = "Your Shopify Shop";
+    user.shopifyShop = shopName;
     
     const response = await users.put(user);
     
