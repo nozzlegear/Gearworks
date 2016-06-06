@@ -2,4 +2,5 @@
 
 import pouch = require("pouchdb");
 
-export const users = new pouch(`${process.env.couchUrl}/users`);
+export const DatabaseUrl: string = process.env.couchUrl;
+export const users = new pouch(`${DatabaseUrl}/users`);

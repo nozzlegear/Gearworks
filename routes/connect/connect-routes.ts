@@ -5,17 +5,22 @@ import {users} from "../../modules/database";
 import {findPlan} from "../../modules/plans";
 import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
-import {basicStrategyName, setAuthCookie, shopifyRequestStrategyName} from "../../modules/auth";
-import {isAuthenticRequest, authorize, RecurringCharges, RecurringCharge, ShopifyError, Shops} from "shopify-prime";
+import {strategies, setAuthCookie} from "../../modules/auth";
+import {isAuthenticRequest, authorize, RecurringCharges, RecurringCharge, Infrastructure, Shops} from "shopify-prime";
+
+export const Routes = {
+    GetShopify: "/connect/shopify",
+    GetShopifyActivate: "/connect/shopify/activate",
+}
 
 export function registerRoutes(server: Server)
 {
     server.route({
         method: "GET",
-        path: "/connect/shopify",
+        path: Routes.GetShopify,
         config: {
             auth: {
-                strategies: [basicStrategyName, shopifyRequestStrategyName],
+                strategies: [strategies.basicAuth, strategies.shopifyRequest],
             }
         },
         handler: {
@@ -25,10 +30,10 @@ export function registerRoutes(server: Server)
     
     server.route({
         method: "GET",
-        path: "/connect/shopify/activate",
+        path: Routes.GetShopifyActivate,
         config: {
             auth: {
-                strategies: [basicStrategyName, shopifyRequestStrategyName],
+                strategies: [strategies.basicAuth, strategies.shopifyRequest],
             }
         },
         handler: {

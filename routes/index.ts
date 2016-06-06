@@ -5,6 +5,7 @@ import {registerRoutes as homeRoutes} from "./home/home-routes";
 import {registerRoutes as assetRoutes} from "./assets/assets-routes";
 import {registerRoutes as setupRoutes} from "./setup/setup-routes";
 import {registerRoutes as connectRoutes} from "./connect/connect-routes";
+import {registerRoutes as webhookRoutes} from "./webhooks/webhook-routes";
 
 export const RoutesToRegister = [
     authRoutes,
@@ -12,4 +13,5 @@ export const RoutesToRegister = [
     assetRoutes,
     setupRoutes,
     connectRoutes,
+    webhookRoutes,
 ];

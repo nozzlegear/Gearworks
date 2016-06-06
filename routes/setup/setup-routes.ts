@@ -6,16 +6,16 @@ import * as pouch from "pouchdb";
 import {IReply, IBoom} from "hapi";
 import {users} from "../../modules/database";
 import {Server, User, Request} from "gearworks";
-import {basicStrategyName} from "../../modules/auth";
+import {strategies} from "../../modules/auth";
 import {humanizeError} from "../../modules/validation";
 import {getRequestDomain} from "../../modules/requests";
 import {IProps as SetupProps} from "../../views/setup/setup";
 import {IProps as PlansProps} from "../../views/setup/plans";
 import {plans as activePlans, findPlan} from "../../modules/plans";
 import {
+    Enums, 
     isValidShopifyDomain, 
     buildAuthorizationUrl, 
-    AuthScope, 
     RecurringCharges, 
     RecurringCharge
 } from "shopify-prime"; 
@@ -28,13 +28,20 @@ const planValidation = joi.object().keys({
     planId: joi.string().only(activePlans.map(p => p.id))
 })
 
+export const Routes = {
+    GetSetup: "/setup",
+    PostSetup: "/setup",
+    GetPlans: "/setup/plans",
+    PostPlans: "/setup/plans",
+}
+
 export function registerRoutes(server: Server)
 {
     server.route({
         method: "GET",
-        path: "/setup",
+        path: Routes.GetSetup,
         config: {
-            auth: basicStrategyName,
+            auth: strategies.basicAuth,
         },
         handler: {
             async: (request, reply) => getSetupForm(server, request, reply)
@@ -43,9 +50,9 @@ export function registerRoutes(server: Server)
     
     server.route({
         method: "POST",
-        path: "/setup",
+        path: Routes.PostSetup,
         config: {
-            auth: basicStrategyName,
+            auth: strategies.basicAuth,
         },
         handler: {
             async: (request, reply) => setup(server, request, reply)
@@ -54,9 +61,9 @@ export function registerRoutes(server: Server)
     
     server.route({
         method: "GET",
-        path: "/setup/plans",
+        path: Routes.GetPlans,
         config: {
-            auth: basicStrategyName,
+            auth: strategies.basicAuth,
         },
         handler: {
             async: (request, reply) => getPlans(server, request, reply)
@@ -65,9 +72,9 @@ export function registerRoutes(server: Server)
     
     server.route({
         method: "POST",
-        path: "/setup/plans",
+        path: Routes.PostPlans,
         config: {
-            auth: basicStrategyName,
+            auth: strategies.basicAuth,
         },
         handler: {
             async: (request, reply) => selectPlan(server, request, reply)
@@ -109,7 +116,7 @@ export async function setup(server: Server, request: Request, reply: IReply)
         return reply.view("setup/setup.js", props);
     }
     
-    const scopes: AuthScope[] = ["read_orders", "write_orders"]
+    const scopes: Enums.AuthScope[] = ["read_orders", "write_orders"]
     const redirect = (getRequestDomain(request) + "/connect/shopify").toLowerCase();
     const oauthUrl = await buildAuthorizationUrl(scopes, payload.shopUrl, server.app.shopifyApiKey, redirect);
 

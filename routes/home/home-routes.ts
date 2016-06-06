@@ -4,10 +4,14 @@ import {Request, IReply} from "hapi";
 import {IProps} from "./../../views/home/home";
 import {Server, AuthCredentials, AuthArtifacts} from "gearworks";
 
+export const Routes = {
+    GetHome: "/"
+}
+
 export function registerRoutes(server: Server)
 {
     server.route({
-        path: "/",
+        path: Routes.GetHome,
         method: "GET",
         handler: {
             async: (request, reply) => getHomepage(server, request, reply)

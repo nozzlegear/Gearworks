@@ -12,10 +12,18 @@ import {IProps as LoginProps} from "./../../views/auth/login";
 import {setAuthCookie, cookieName} from "./../../modules/auth";
 import {IProps as RegisterProps} from "./../../views/auth/register";
 
+export const Routes = {
+    GetLogin: "/auth/login",
+    PostLogin: "/auth/login",
+    GetLogout: "/auth/logout",
+    GetRegister: "/auth/register",
+    PostRegister: "/auth/register",
+}
+
 export function registerRoutes(server: Server)
 {
     server.route({
-        path: "/auth/login",
+        path: Routes.GetLogin,
         method: "GET",
         config: {
             auth: false
@@ -26,7 +34,7 @@ export function registerRoutes(server: Server)
     });
     
     server.route({
-        path: "/auth/login",
+        path: Routes.PostLogin,
         method: "POST",
         config: {
             auth: false
@@ -37,7 +45,7 @@ export function registerRoutes(server: Server)
     });
     
     server.route({
-        path: "/auth/logout",
+        path: Routes.GetLogout,
         method: "GET",
         config: {
             auth: false
@@ -48,7 +56,7 @@ export function registerRoutes(server: Server)
     });
     
     server.route({
-        path: "/auth/register",
+        path: Routes.GetRegister,
         method: "GET",
         config: {
             auth: false,
@@ -59,7 +67,7 @@ export function registerRoutes(server: Server)
     });
     
     server.route({
-        path: "/auth/register",
+        path: Routes.PostRegister,
         method: "POST",
         config: {
             auth: false,

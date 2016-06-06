@@ -4,24 +4,21 @@ import * as boom from "boom";
 import * as bcrypt from "bcrypt";
 import {Request} from "hapi";
 import {v4 as guid} from "node-uuid";
-import {isAuthenticRequest} from "shopify-prime";
-import {Server, DefaultContext, User, AuthArtifacts, AuthCredentials} from "gearworks";
+import {Routes as AuthRoutes} from "../routes/auth/auth-routes";
+import {Routes as SetupRoutes} from "../routes/setup/setup-routes";
+import {isAuthenticRequest, isAuthenticWebhook} from "shopify-prime";
+import {Caches, getCacheValue, setCacheValue, deleteCacheValue} from "./cache";
+import {Server, DefaultContext, User, AuthArtifacts, AuthCredentials, AuthCookie} from "gearworks";
 
 export const cookieName = "GearworksAuth"; 
-export const fullStrategyName = "full-auth";
-export const basicStrategyName = "basic-auth";
-export const shopifyRequestStrategyName = "shopify-request-auth";
 export const yarSalt: string = process.env.yarSalt;
 export const encryptionSignature = process.env.encryptionSignature;
 
-export type authCookie = {
-    userId: string;
-    username: string;
-    encryptionSignature: string;
-    shopName: string;
-    shopDomain: string;
-    shopToken: string;
-    planId: string;
+export const strategies = {
+    fullAuth: "full-auth",
+    basicAuth: "basic-auth",
+    shopifyRequest: "shopify-request",
+    shopifyWebhook: "shopify-webhook-auth",
 }
 
 export function configureAuth(server: Server)
@@ -31,7 +28,7 @@ export function configureAuth(server: Server)
     {
         if (request.response.variety === "view")
         {
-            const cookie: authCookie = request.yar.get(cookieName, false);
+            const cookie: AuthCookie = request.yar.get(cookieName, false);
             let context: DefaultContext = request.response.source.context;
             
             context.user = {
@@ -50,91 +47,118 @@ export function configureAuth(server: Server)
         return reply.continue();
     })
     
-    const fullSchemeName = "full";
-    const basicSchemeName = "basic";
-    const shopifyRequestSchemeName = "shopify-request";
+    const fullScheme = "full";
+    const basicScheme = "basic";
+    const shopifyRequestScheme = "shopify-request";
+    const shopifyWebhookScheme = "shopify-webhook";
     
-    server.auth.scheme(shopifyRequestSchemeName, (server, options) =>
-    {
-        return {
-            authenticate: async (request, reply) =>
+    server.auth.scheme(fullScheme, (s, options) => ({
+        authenticate: (request, reply) => 
+        {
+            const cookie = getAuthCookie(request);
+            
+            if (!cookie)
             {
-                const isAuthentic = await isAuthenticRequest(request.query, server.app.shopifySecretKey);
+                const response = request.generateResponse().redirect(AuthRoutes.GetLogin);
+                
+                // Response is ignored if error is passed in as first param
+                return reply(null, response);
+            }
+            
+            const result = getAuthCookieData(cookie);
+            
+            if (!result.artifacts.shopToken)
+            {
+                const response = request.generateResponse().redirect(SetupRoutes.GetSetup);
+                
+                return reply(null, response, result);
+            }
+            
+            if (!result.artifacts.planId)
+            {
+                const response = request.generateResponse().redirect(SetupRoutes.GetPlans);
+                
+                return reply(null, response, result);
+            }
+            
+            return reply.continue(result);
+        }
+    }));
+    
+    server.auth.scheme(basicScheme, (s, options) => ({
+        authenticate: async (request, reply) =>
+        {
+            const cookie = getAuthCookie(request);
+            function generateRedirect()
+            {
+                return request.generateResponse().redirect(AuthRoutes.GetLogin);
+            }
+            
+            if (!cookie)
+            {
+                // Response is ignored if error is passed in as first param
+                return reply(null, generateRedirect());
+            }
+            
+            const result = getAuthCookieData(cookie);
+            let invalidationRequest: any;
+            
+            try
+            {
+                invalidationRequest = await getCacheValue(Caches.sessionInvalidation, result.credentials.userId);
+            }
+            catch (e)
+            {
+                console.log("Error getting cache value", e);
+               
+                // Not forcing user to login after cache retrieval error. Else they may easily get stuck on the login page.
+            }
+            
+            if (invalidationRequest)
+            {
+                // User's login has been invalidated. Force them to log in again.
+                return reply(null, generateRedirect())
+            }
+            
+            return reply.continue(result);
+        }
+    }));
+    
+    server.auth.scheme(shopifyRequestScheme, (s, options) => ({
+        authenticate: async (request, reply) =>
+        {
+            const isAuthentic = await isAuthenticRequest(request.query, server.app.shopifySecretKey);
 
-                if (!isAuthentic)
-                {
-                    return reply(boom.badRequest("Request did not pass validation."));
-                }
-                
-                return reply.continue(request.auth.credentials);
-            }
-        }
-    });
-    
-    server.auth.scheme(basicSchemeName, (server, options) =>
-    {
-        return {
-            authenticate: (request, reply) =>
+            if (!isAuthentic)
             {
-                const cookie = getAuthCookie(request);
-                
-                if (!cookie)
-                {
-                    const response = request.generateResponse().redirect("/auth/login");
-                    
-                    // Response is ignored if error is passed in as first param
-                    return reply(null, response);
-                }
-                
-                const result = getAuthCookieData(cookie);
-                
-                return reply.continue(result);
+                return reply(boom.badRequest("Request did not pass validation."));
             }
+            
+            return reply.continue(request.auth.credentials);
         }
-    })
+    }));
     
-    server.auth.scheme(fullSchemeName, (server, options) =>
-    {
-        return {
-            authenticate: (request, reply) => 
+    server.auth.scheme(shopifyWebhookScheme, (s, options) => ({
+        authenticate: async (request, reply) =>
+        {
+            const isAuthentic = await isAuthenticWebhook(request.query, request.payload.rawBody, server.app.shopifySecretKey);
+            
+            if (!isAuthentic)
             {
-                const cookie = getAuthCookie(request);
-                
-                if (!cookie)
-                {
-                    const response = request.generateResponse().redirect("/auth/login");
-                    
-                    // Response is ignored if error is passed in as first param
-                    return reply(null, response);
-                }
-                
-                const result = getAuthCookieData(cookie);
-                
-                if (!result.artifacts.shopToken)
-                {
-                    const response = request.generateResponse().redirect("/setup");
-                    
-                    return reply(null, response, result);
-                }
-                
-                if (!result.artifacts.planId)
-                {
-                    const response = request.generateResponse().redirect("/setup/plans");
-                    
-                    return reply(null, response, result);
-                }
-                
-                return reply.continue(result);
+                return reply(boom.badRequest("Request did not pass validation."));
             }
+            
+            return reply.continue(request.auth.credentials);
         }
-    })
+    }))
     
-    server.auth.strategy(basicStrategyName, basicSchemeName, false);
-    server.auth.strategy(shopifyRequestStrategyName, shopifyRequestSchemeName, false);
-    server.auth.strategy(fullStrategyName, fullSchemeName, true /* Default strategy for all requests */);
+    server.auth.strategy(strategies.basicAuth, basicScheme, false);
+    server.auth.strategy(strategies.shopifyRequest, shopifyRequestScheme, false);
+    server.auth.strategy(strategies.shopifyWebhook, shopifyWebhookScheme, false);
+    server.auth.strategy(strategies.fullAuth, fullScheme, true /* Default strategy for all requests */);
 }
 
-export function getAuthCookieData(cookie: authCookie)
+function getAuthCookieData(cookie: AuthCookie)
 {
     const result = {
         credentials: {
@@ -158,14 +182,14 @@ export function getAuthCookieData(cookie: authCookie)
  */
 export function getAuthCookie(request: Request)
 {
-    const cookie: authCookie = request.yar.get(cookieName, false);
+    const cookie: AuthCookie = request.yar.get(cookieName, false);
     
     if (!cookie || ! bcrypt.compareSync(encryptionSignature, cookie.encryptionSignature))
     {
         return undefined;
     }
     
-    return cookie as authCookie;
+    return cookie as AuthCookie;
 }
 
 /**
@@ -183,5 +207,5 @@ export function setAuthCookie(request: Request, user: User)
         shopName: user.shopifyShop,
         shopToken: user.shopifyAccessToken,
         planId: user.planId,
-    } as authCookie)
+    } as AuthCookie)
 }

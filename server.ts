@@ -5,14 +5,17 @@ import * as joi from "joi";
 import * as boom from "boom";
 import * as path from "path"; 
 import * as util from "util";
+import {promisify} from "bluebird";
+import {DatabaseUrl} from "./modules/database";
 import {RoutesToRegister} from "./routes/index";
 import {defaults, isError, merge} from "lodash";
 import {Server, ServerApp, DefaultContext} from "gearworks";
 import {IProps as ErrorPageProps} from "./views/errors/error";
+import {DefaultTTL, CacheName, registerCaches} from "./modules/cache";
 import {configureAuth, encryptionSignature, yarSalt} from "./modules/auth";
 
 //Prepare Hapi server
-const server: Server = new Hapi.Server();
+const server: Server = new Hapi.Server() as Server;
 const config: Hapi.IServerConnectionOptions = {
     port: process.env.PORT || 3000,
     host: process.env.HOST || "localhost",
@@ -42,12 +45,14 @@ async function registerPlugins()
             cookieOptions: {
                 password: yarSalt,
                 isSecure: server.app.isLive,
-                ttl: 7 * 24 * 60 * 60 * 1000 , // Cookie expires in 7 days
+                ttl: DefaultTTL, 
                 ignoreErrors: true, //tells Hapi that it should not respond with a HTTP 400 error if the session cookie cannot decrypt
                 clearInvalid: true  //tells Hapi that if a session cookie is invalid for any reason, to clear it from the browser.
             }
         }
     })
+    
+    await registerCaches(server);
 }
 
 async function startServer()
@@ -63,6 +68,11 @@ async function startServer()
         throw new Error("process.env.yarSalt must be a 32-char-or-greater random string.");
     }
     
+    if (!DatabaseUrl)
+    {
+        throw new Error("process.env.couchUrl must be a url pointed to a couchdb or pouchdb installation.");
+    }
+    
     //Configure the server's app state
     server.app = defaults(require("../gearworks.private.json"), {
         appName: "Gearworks",
@@ -72,6 +82,7 @@ async function startServer()
         stripePublishableKey: process.env.stripePublishableKey,
         stripeSecretKey: process.env.stripeSecretKey,
         isLive: process.env.NODE_ENV === "production",
+        caches: { }
     } as ServerApp) as ServerApp;
     
     await registerPlugins();

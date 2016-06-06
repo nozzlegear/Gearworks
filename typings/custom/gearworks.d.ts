@@ -1,11 +1,26 @@
+/// <reference path="../typings.d.ts" />
+
 declare module "gearworks"
 {
     import * as pouch from "pouchdb";
-    import {Server as HapiServer, Request as HapiRequest} from "hapi";
+    import {CachePolicy, CacheOptions, CacheClient} from "catbox";
+    import {
+        Server as HapiServer, 
+        Request as HapiRequest,
+        ICatBoxCacheOptions,
+        ServerCache
+    } from "hapi";
+    
+    export interface CacheConfig{
+        segment: string;
+        defaultTTL: number;
+        client: CacheClient;
+    }
     
     export interface Server extends HapiServer
     {
         app: ServerApp;
+        cache: ServerCache;
     }
     
     export interface Request extends HapiRequest
@@ -115,5 +130,16 @@ declare module "gearworks"
          * The user's plan id.
          */
         planId?: string;
+    }
+    
+    export interface AuthCookie  
+    {
+        userId: string;
+        username: string;
+        encryptionSignature: string;
+        shopName: string;
+        shopDomain: string;
+        shopToken: string;
+        planId: string;
     }
 }

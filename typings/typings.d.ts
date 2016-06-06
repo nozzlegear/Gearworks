@@ -4,3 +4,4 @@
 /// <reference path="./custom/hapi-shim.d.ts" />
 /// <reference path="./custom/string-capitalize.d.ts" />
 /// <reference path="./custom/pouchdb.d.ts" />
+/// <reference path="./custom/catbox.d.ts" />
