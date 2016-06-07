@@ -715,6 +715,92 @@ declare module "pouchdb" {
                     }
                 }
 
+                /** Contains the method and call/return types for `.createIndex()` Requires the pouchdb-find plugin. */
+                module createIndex {
+                    interface Options {
+                        index: {
+                            fields: string[];
+                            name?: string;
+                            ddoc?: string;
+                            type?: "json";
+                        }
+                    }
+                    /**
+                     * Callback pattern for `createIndex()`
+                     */
+                    interface Callback {
+                        /**
+                         * Creates an index.
+                         */
+                        createIndex(options: Options, callback?: async.Callback<any>): void;
+                    }
+                    /** Promise pattern for `.createIndex()` */
+                    interface Promisable {
+                        /**
+                         * Creates an index.
+                         */
+                        createIndex(options: Options): async.PouchPromise<any>;
+                    }
+                }
+
+                /** Contains the method and call/return types for `.find()`. Requires the pouchdb-find plugin. */
+                module find {
+                    interface Options {
+                        /**
+                         * Defines a selector to filter the results. Required. Can use mongo-like selectors: 
+                         * @selector $lt Match fields "less than" this one.
+                         * @selector $gt Match fields "greater than" this one.
+                         * @selector $lte Match fields "less than or equal to" this one. 
+                         * @selector $gte Match fields "greater than or equal to" this one.
+                         * @selector $eq Match fields equal to this one.
+                         * @selector $ne Match fields not equal to this one.
+                         * @selector $exists True if the field should exist, false otherwise.
+                         * @selector $type. One of: "null", "boolean", "number", "string", "array", or "object".
+                         * @example selector: { name: "Mario", releaseDate: { $gt: 1990 } } would select all items with a name of "Mario" and a release date greater than 1990.
+                         */
+                        selector: any;
+                        
+                        /**
+                         * Defines a list of fields that you want to receive. If omitted, you get the full documents.
+                         */
+                        fields?: string[];
+
+                        /**
+                         * Defines a list of fields defining how you want to sort. Note that sorted fields also have to be selected in the selector.
+                         */
+                        sort?: string[];
+
+                        /**
+                         * Maximum number of documents to return.
+                         */
+                        limit?: number;
+
+                        /**
+                         * Number of docs to skip before returning. 
+                         */
+                        skip?: number;
+                    }
+                    interface Result<T> {
+                        docs: T[]
+                    }
+                    /**
+                     * Callback pattern for `.find()`
+                     */
+                    interface Callback {
+                        /**
+                         * Find an item.
+                         */
+                        find<T>(options: Options, callback?: async.Callback<Result<T>>): void;
+                    }
+                    /** Promise pattern for `.find()` */
+                    interface Promisable {
+                        /**
+                         * Find an item.
+                         */
+                        find<T>(options: Options): async.PouchPromise<Result<T>>;
+                    }
+                }
+
                 /** Contains the method and call/return types for get() */
                 module get {
                     interface Options {
@@ -1088,6 +1174,8 @@ declare module "pouchdb" {
                     , methods.close.Callback
                     , methods.destroy.Callback
                     , methods.get.Callback
+                    , methods.find.Callback
+                    , methods.createIndex.Callback
                     , methods.id.Callback
                     , methods.info.Callback
                     , methods.post.Callback
@@ -1102,6 +1190,8 @@ declare module "pouchdb" {
                     , methods.close.Promisable
                     , methods.destroy.Promisable
                     , methods.get.Promisable
+                    , methods.find.Promisable
+                    , methods.createIndex.Promisable
                     , methods.id.Promisable
                     , methods.info.Promisable
                     , methods.post.Promisable
@@ -1235,6 +1325,9 @@ declare module "pouchdb" {
         export interface PouchDB {
             /** Error helpers */
             Errors: api.StandardErrors;
+
+            /** Add a plugin to PouchDB */
+            plugin(plugin: any): void;
         }
         /**
          * The main pouchDB entry point. The constructors here will return either a

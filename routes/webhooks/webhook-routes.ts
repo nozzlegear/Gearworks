@@ -1,8 +1,11 @@
 /// <reference path="./../../typings/index.d.ts" />
 
-import {IReply} from "hapi";
+import {expectationFailed} from "boom";
 import {Server, Request} from "gearworks";
+import {IReply, IBoom, Response} from "hapi";
 import {strategies} from "../../modules/auth";
+import {deleteCacheValue, Caches} from "../../modules/cache";
+import {findUserByShopId, users} from "../../modules/database";
 
 export const Routes = {
      GetAppUninstalled: "/webhooks/app-uninstalled",
@@ -11,7 +14,7 @@ export const Routes = {
 export function registerRoutes(server: Server)
 {
     server.route({
-        method: "GET",
+        method: "POST",
         path: Routes.GetAppUninstalled,
         config: {
             auth: strategies.shopifyWebhook
@@ -21,21 +24,44 @@ export function registerRoutes(server: Server)
         }
     })
 }
-
-export async function handleAppUninstalled(server: Server, request: Request, reply: IReply)
+ 
+export async function handleAppUninstalled(server: Server, request: Request, reply: IReply): Promise<IBoom | Response>
 {
-    // TODO: figure out how to invalidate a Yar cookie. Anybody trying to use the app after their 
-    // shopify key was invalidated is going to have a bad time.
-    
-    // Each user should have a guid cache key, then when logging in that cache key gets stored in some
-    // kind of session storage. A function will be created for invalidating a session, which just removes
-    // that cache key from session storage. Every auth check will check that session for the cache storage 
-    // in the yar cookie. If it doesn't exist there, the user will have to login again.
-    
-    // Or, a different session storage that just tracks users that need to log in again. This would likely
-    // need to be backed by a db store in case the server shuts down before the user logs out. They should
-    // have a max age of the same length as the yar cookie.
-    
-    
+    const query: {shopId: string, shop: string} = request.query;
+    const user = await findUserByShopId(parseInt(query.shopId));
+
+    if (!user)
+    {
+        console.log(`Could not find owner of shop id ${query.shop} during app/uninstalled webhook.`);
+
+        // No user found with that shopId. This webhook may be a duplicate. Return OK to prevent Shopify resending the webhook.
+        return reply(null);
+    }
+
+    // Shopify access token has already been invalidated at this point. Remove the user's Shopify data.
+    user.shopifyAccessToken = undefined;
+    user.shopifyDomain = undefined;
+    user.shopifyShopId = undefined;
+    user.shopifyShopName = undefined;
+
+    const update = await users.put(user);
+
+    if (!update.ok)
+    {
+        console.error(`Failed to delete user ${user._id}'s Shopify data during app/uninstalled webhook.`, update);
+
+        return reply(expectationFailed("Failed to delete user's Shopify data during app/uninstalled webhook."));
+    }
+
+    // Delete the user's data from the auth cache to force their next request to query the database.
+    try
+    {
+        await deleteCacheValue(Caches.userAuth, user._id);
+    }
+    catch (e)
+    {
+        console.error("Failed to delete user data from auth cache after handling app/uninstalled webhook.", e);
+    }
+
     return reply(null);
 }

@@ -72,6 +72,7 @@ declare module "gearworks"
         shopName: string;
         shopDomain: string;
         shopToken: string;
+        shopId: number;
         planId: string;
     }
     
@@ -124,7 +125,12 @@ declare module "gearworks"
         /**
          * The name of the user's Shopify shop.
          */
-        shopifyShop?: string;
+        shopifyShopName?: string;
+
+        /**
+         * The id of the user's Shopify shop.
+         */
+        shopifyShopId?: number;
         
         /**
          * The user's plan id.

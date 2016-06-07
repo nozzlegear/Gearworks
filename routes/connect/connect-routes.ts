@@ -6,7 +6,17 @@ import {findPlan} from "../../modules/plans";
 import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
 import {strategies, setUserAuth} from "../../modules/auth";
-import {isAuthenticRequest, authorize, RecurringCharges, RecurringCharge, Infrastructure, Shops} from "shopify-prime";
+import {getRequestDomain,getRequestHost} from "../../modules/requests";
+import {Routes as WebhookRoutes} from "../../routes/webhooks/webhook-routes";
+import {
+    isAuthenticRequest, 
+    authorize, 
+    RecurringCharges, 
+    RecurringCharge, 
+    Webhooks, 
+    Infrastructure, 
+    Shops
+} from "shopify-prime";
 
 export const Routes = {
     GetShopify: "/connect/shopify",
@@ -47,14 +57,15 @@ export async function connectShopify(server: Server, request: Request, reply: IR
     const query: {code: string, shop: string, hmac: string} = request.query;
     const accessToken = await authorize(query.code, query.shop, server.app.shopifyApiKey, server.app.shopifySecretKey);
     
-    // Grab the user's shopname and their database record
-    const shopName = (await new Shops(query.shop, accessToken).get({fields: ["name"]})).name;
+    // Grab the user's shop name and id and their database record
+    const shopData = (await new Shops(query.shop, accessToken).get({fields: ["name,id"]}));
     let user = await users.get(request.auth.credentials.userId) as User;
     
     // Store the user's shop data
     user.shopifyDomain = query.shop;
     user.shopifyAccessToken = accessToken;
-    user.shopifyShop = shopName;
+    user.shopifyShopName = shopData.name;
+    user.shopifyShopId = shopData.id;
     
     const response = await users.put(user);
     
@@ -67,8 +78,28 @@ export async function connectShopify(server: Server, request: Request, reply: IR
     
     // Update the user's auth token
     await setUserAuth(request, user);
+
+    const redirect = reply.redirect("/");
+
+    if (getRequestHost(request).toLowerCase() === "localhost")
+    {
+        // Don't create any webhooks unless this app is running on a real domain. Webhooks cannot point to localhost.
+        return redirect;
+    }
+
+    // Create the AppUninstalled webhook immediately after the user accepts installation
+    const webhooks = new Webhooks(user.shopifyDomain, user.shopifyAccessToken);
+
+    // Ensure the webhook doesn't already exist
+    if ((await webhooks.list({topic: "app/uninstalled", fields: ["id"], limit: 1})).length === 0)
+    {
+        await webhooks.create({
+            address: `${getRequestDomain(request)}/${WebhookRoutes.GetAppUninstalled}?shopId=${user.shopifyShopId}`,
+            topic: "app/uninstalled"
+        })
+    }
     
-    return reply.redirect("/");
+    return redirect;
 }
 
 export async function activateShopifyPlan(server: Server, request: Request, reply: IReply)

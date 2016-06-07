@@ -5,6 +5,7 @@ import * as bcrypt from "bcrypt";
 import {Request} from "hapi";
 import {users} from "./database";
 import {v4 as guid} from "node-uuid";
+import {getRawBody} from "./requests";
 import {Routes as AuthRoutes} from "../routes/auth/auth-routes";
 import {Routes as SetupRoutes} from "../routes/setup/setup-routes";
 import {isAuthenticRequest, isAuthenticWebhook} from "shopify-prime";
@@ -120,15 +121,27 @@ export function configureAuth(server: Server)
     server.auth.scheme(shopifyWebhookScheme, (s, options) => ({
         authenticate: async (request, reply) =>
         {
-            const isAuthentic = await isAuthenticWebhook(request.query, request.payload.rawBody, server.app.shopifySecretKey);
+            const body = await getRawBody(request);
+            let isAuthentic: boolean;
+
+            try
+            {
+                isAuthentic = await isAuthenticWebhook(request.headers["x-shopify-hmac-sha256"], body, server.app.shopifySecretKey);
+            }
+            catch (e)
+            {
+                console.log("Failed to get isAuthentic result", e);
+
+                return reply(boom.badRequest("Failed to get isAuthentic result.", e));
+            }
             
             if (!isAuthentic)
             {
-                return reply(boom.badRequest("Request did not pass validation."));
+                return reply(boom.unauthorized("Request did not pass validation."));
             }
             
-            return reply.continue(request.auth.credentials);
-        }
+            return reply.continue({credentials: {}});
+        },
     }))
     
     server.auth.strategy(strategies.basicAuth, basicScheme, false);
@@ -204,9 +217,10 @@ async function setUserCache(user: User)
 {
     const result: AuthArtifacts = {
         planId: user.planId,
-        shopName: user.shopifyShop,
+        shopName: user.shopifyShopName,
         shopDomain: user.shopifyDomain,
         shopToken: user.shopifyAccessToken,
+        shopId: user.shopifyShopId,
     };
 
     await setCacheValue(Caches.userAuth, user._id, result);
@@ -228,8 +242,9 @@ async function getUserCache(userId: string, autoRefreshCache: boolean)
         const data: AuthArtifacts = {
             planId: user.planId,
             shopDomain: user.shopifyDomain, 
-            shopName: user.shopifyShop,
-            shopToken: user.shopifyAccessToken
+            shopName: user.shopifyShopName,
+            shopToken: user.shopifyAccessToken,
+            shopId: user.shopifyShopId,
         };
 
         // Store this data back in the cache to prevent future db queries

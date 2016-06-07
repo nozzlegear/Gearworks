@@ -1,6 +1,7 @@
 /// <reference path="./../typings/index.d.ts" />
 
 import {Request} from "hapi";
+import * as Promise from "bluebird";
 
 /**
  * Returns the request's protocol (e.g. https) by trying to read the x-forwarded-proto header. This is the protocol the user typed into their address bar.
@@ -30,4 +31,25 @@ export function getRequestDomain(request: Request)
     const host = getRequestHost(request);
     
     return `${protocol}://${host}`
+}
+
+/**
+ * Gets the raw request body string.
+ */
+export async function getRawBody(request: Request)
+{
+    return new Promise<string>((resolve, reject) =>
+    {
+        let body = "";
+
+        request.raw.req.on("data", (data: Uint8Array) =>
+        {
+            body += data.toString();
+        });
+
+        request.raw.req.once("end", () =>
+        {
+            resolve(body);
+        });
+    })
 }
