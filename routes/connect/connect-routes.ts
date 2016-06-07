@@ -5,7 +5,7 @@ import {users} from "../../modules/database";
 import {findPlan} from "../../modules/plans";
 import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
-import {strategies, setAuthCookie} from "../../modules/auth";
+import {strategies, setUserAuth} from "../../modules/auth";
 import {isAuthenticRequest, authorize, RecurringCharges, RecurringCharge, Infrastructure, Shops} from "shopify-prime";
 
 export const Routes = {
@@ -66,7 +66,7 @@ export async function connectShopify(server: Server, request: Request, reply: IR
     }
     
     // Update the user's auth token
-    setAuthCookie(request, user);
+    await setUserAuth(request, user);
     
     return reply.redirect("/");
 }
@@ -110,7 +110,7 @@ export async function activateShopifyPlan(server: Server, request: Request, repl
         throw new Error("Activated user plan but failed to save plan id.");
     }
     
-    setAuthCookie(request, user);
+    await setUserAuth(request, user);
     
     return reply.redirect("/");
 }

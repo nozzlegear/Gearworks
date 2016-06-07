@@ -137,9 +137,5 @@ declare module "gearworks"
         userId: string;
         username: string;
         encryptionSignature: string;
-        shopName: string;
-        shopDomain: string;
-        shopToken: string;
-        planId: string;
     }
 }

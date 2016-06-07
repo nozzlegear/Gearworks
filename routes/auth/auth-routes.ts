@@ -9,7 +9,7 @@ import {hashSync, compareSync} from "bcrypt";
 import {users} from "./../../modules/database";
 import {humanizeError} from "./../../modules/validation";
 import {IProps as LoginProps} from "./../../views/auth/login";
-import {setAuthCookie, cookieName} from "./../../modules/auth";
+import {setUserAuth, cookieName} from "./../../modules/auth";
 import {IProps as RegisterProps} from "./../../views/auth/register";
 
 export const Routes = {
@@ -129,7 +129,7 @@ export async function login(server: Server, request: Request, reply: IReply)
     }
     
     //Successful login
-    setAuthCookie(request, user);
+    await setUserAuth(request, user);
     
     return reply.redirect("/");
 }
@@ -206,7 +206,7 @@ export async function register(server: Server, request: Request, reply: IReply):
     }
     
     //Log the user in
-    await setAuthCookie(request, user);
+    await setUserAuth(request, user);
     
     return reply.redirect("/setup");
 }

@@ -55,7 +55,6 @@
     "bluebird": "^3.4.0",
     "boom": "^3.2.0",
     "catbox": "^7.1.1",
-    "catbox-couchbase": "^2.2.4",
     "catbox-memory": "^2.0.2",
     "firebase": "^3.0.2",
     "hapi": "^13.4.1",

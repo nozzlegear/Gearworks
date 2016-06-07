@@ -45,7 +45,7 @@ async function registerPlugins()
             cookieOptions: {
                 password: yarSalt,
                 isSecure: server.app.isLive,
-                ttl: DefaultTTL, 
+                ttl: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
                 ignoreErrors: true, //tells Hapi that it should not respond with a HTTP 400 error if the session cookie cannot decrypt
                 clearInvalid: true  //tells Hapi that if a session cookie is invalid for any reason, to clear it from the browser.
             }

@@ -3,6 +3,7 @@
 import * as boom from "boom";
 import * as bcrypt from "bcrypt";
 import {Request} from "hapi";
+import {users} from "./database";
 import {v4 as guid} from "node-uuid";
 import {Routes as AuthRoutes} from "../routes/auth/auth-routes";
 import {Routes as SetupRoutes} from "../routes/setup/setup-routes";
@@ -53,11 +54,11 @@ export function configureAuth(server: Server)
     const shopifyWebhookScheme = "shopify-webhook";
     
     server.auth.scheme(fullScheme, (s, options) => ({
-        authenticate: (request, reply) => 
+        authenticate: async (request, reply) => 
         {
-            const cookie = getAuthCookie(request);
-            
-            if (!cookie)
+            const auth = await getUserAuth(request);
+
+            if (!auth)
             {
                 const response = request.generateResponse().redirect(AuthRoutes.GetLogin);
                 
@@ -65,62 +66,40 @@ export function configureAuth(server: Server)
                 return reply(null, response);
             }
             
-            const result = getAuthCookieData(cookie);
-            
-            if (!result.artifacts.shopToken)
+            if (!auth.artifacts.shopToken)
             {
                 const response = request.generateResponse().redirect(SetupRoutes.GetSetup);
                 
-                return reply(null, response, result);
+                return reply(null, response, auth);
             }
             
-            if (!result.artifacts.planId)
+            if (!auth.artifacts.planId)
             {
                 const response = request.generateResponse().redirect(SetupRoutes.GetPlans);
                 
-                return reply(null, response, result);
+                return reply(null, response, auth);
             }
             
-            return reply.continue(result);
+            return reply.continue(auth);
         }
     }));
     
     server.auth.scheme(basicScheme, (s, options) => ({
         authenticate: async (request, reply) =>
         {
-            const cookie = getAuthCookie(request);
+            const auth = await getUserAuth(request);
             function generateRedirect()
             {
                 return request.generateResponse().redirect(AuthRoutes.GetLogin);
             }
-            
-            if (!cookie)
+
+            if (!auth)
             {
                 // Response is ignored if error is passed in as first param
                 return reply(null, generateRedirect());
             }
             
-            const result = getAuthCookieData(cookie);
-            let invalidationRequest: any;
-            
-            try
-            {
-                invalidationRequest = await getCacheValue(Caches.sessionInvalidation, result.credentials.userId);
-            }
-            catch (e)
-            {
-                console.log("Error getting cache value", e);
-               
-                // Not forcing user to login after cache retrieval error. Else they may easily get stuck on the login page.
-            }
-            
-            if (invalidationRequest)
-            {
-                // User's login has been invalidated. Force them to log in again.
-                return reply(null, generateRedirect())
-            }
-            
-            return reply.continue(result);
+            return reply.continue(auth);
         }
     }));
     
@@ -158,29 +137,11 @@ export function configureAuth(server: Server)
     server.auth.strategy(strategies.fullAuth, fullScheme, true /* Default strategy for all requests */);
 }
 
-function getAuthCookieData(cookie: AuthCookie)
-{
-    const result = {
-        credentials: {
-            username: cookie.username,
-            userId: cookie.userId,
-        } as AuthCredentials,
-        artifacts: {
-            shopName: cookie.shopName,
-            shopDomain: cookie.shopDomain,
-            shopToken: cookie.shopToken,
-            planId: cookie.planId,
-        } as AuthArtifacts,
-    };
-    
-    return result;
-}
-
 /**
  * Attempts to get the user's auth cookie, ensuring it has a matching encryption signature. 
  * Returns undefined if the cookie isn't found or doesn't have a matching signature.
  */
-export function getAuthCookie(request: Request)
+export function getUserAuth(request: Request)
 {
     const cookie: AuthCookie = request.yar.get(cookieName, false);
     
@@ -189,23 +150,93 @@ export function getAuthCookie(request: Request)
         return undefined;
     }
     
-    return cookie as AuthCookie;
+    return getAuthData(cookie);
 }
 
 /**
- * Sets an auth cookie, e.g. after logging in or updating an auth cookie property.
+ * Sets an auth cookie and caching data, e.g. after logging in or updating a user.
  */
-export function setAuthCookie(request: Request, user: User)
+export async function setUserAuth(request: Request, user: User)
 {
     const hash = bcrypt.hashSync(encryptionSignature, 10);
-    
-    return request.yar.set(cookieName, {
+    const cookie: AuthCookie = {
         encryptionSignature: hash,
-        userId: user._id,
+        userId: user._id.toLowerCase(),
         username: user.username,
-        shopDomain: user.shopifyDomain,
-        shopName: user.shopifyShop,
-        shopToken: user.shopifyAccessToken,
+    }
+
+    try
+    {
+        await setUserCache(user);
+    }
+    catch (e)
+    {
+        console.error("Error setting user cache data.");
+
+        throw e;
+    }
+    
+    return request.yar.set(cookieName, cookie);
+}
+
+async function getAuthData(cookie: AuthCookie, autoRefreshCache?: boolean)
+{
+    // Auto refresh cache by default
+    if (typeof autoRefreshCache === "undefined")
+    {
+        autoRefreshCache = true;
+    }
+
+    const credentials: AuthCredentials = {
+        username: cookie.username,
+        userId: cookie.userId,
+    };
+    const session = await getUserCache(cookie.userId, autoRefreshCache);
+    const result = {
+        artifacts: session,
+        credentials: credentials,
+    };
+    
+    return result;
+}
+
+async function setUserCache(user: User)
+{
+    const result: AuthArtifacts = {
         planId: user.planId,
-    } as AuthCookie)
+        shopName: user.shopifyShop,
+        shopDomain: user.shopifyDomain,
+        shopToken: user.shopifyAccessToken,
+    };
+
+    await setCacheValue(Caches.userAuth, user._id, result);
+
+    return result;
+}
+
+/**
+ * Gets user data from the cache.
+ */
+async function getUserCache(userId: string, autoRefreshCache: boolean)
+{
+    const result = await getCacheValue<AuthArtifacts>(Caches.userAuth, userId);
+
+    if (!result && autoRefreshCache)
+    {
+        // Attempt to pull auth data from database.
+        const user = await users.get<User>(userId.toLowerCase());
+        const data: AuthArtifacts = {
+            planId: user.planId,
+            shopDomain: user.shopifyDomain, 
+            shopName: user.shopifyShop,
+            shopToken: user.shopifyAccessToken
+        };
+
+        // Store this data back in the cache to prevent future db queries
+        await setCacheValue(Caches.userAuth, userId, data);
+
+        return data;
+    }
+
+    return result.item;
 }

@@ -6,17 +6,17 @@ import {Server, CacheConfig} from "gearworks";
 import {Client, CachePolicy, CachedItem} from "catbox";
 
 export const CacheName = "catbox-couchbase";
-export const DefaultTTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+export const DefaultTTL = 60 * 60 * 1000; //60 minutes in milliseconds
 
 /**
  * A collection of caches used throughout the app.
  */
-export const Caches: {sessionInvalidation: CacheConfig} = {
+export const Caches: {userAuth: CacheConfig} = {
     /**
-     * A cache to store ids of users who must be forced to login on the next auth check. 
+     * A cache for storing user data used during auth checks.
      */
-    sessionInvalidation: {
-        segment: "invalidations",
+    userAuth: {
+        segment: "user_auth_data",
         client: undefined,
         defaultTTL: DefaultTTL,
     }
@@ -27,8 +27,8 @@ export const Caches: {sessionInvalidation: CacheConfig} = {
  */
 export async function registerCaches(server: Server)
 {
-    Caches.sessionInvalidation.client = new Client(require("catbox-memory"), undefined);
-    Caches.sessionInvalidation.client.start(async (error) =>
+    Caches.userAuth.client = new Client(require("catbox-memory"), undefined);
+    Caches.userAuth.client.start(async (error) =>
     {
         if (error)
         {
