@@ -14,7 +14,7 @@ export const users = new pouch(`${DatabaseUrl}/users`);
  */
 export async function findUserByShopId(shopId: number): Promise<User>
 {
-    // Don't search for null
+    // Don't search for null, undefined or NaN values
     if (!shopId)
     {
         return undefined;
