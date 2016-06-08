@@ -43,11 +43,7 @@ declare module "gearworks"
     {
         isLive: boolean;
         rootDir: string;
-        "appName": string;
-        "shopifyApiKey": string;
-        "shopifySecretKey": string;
-        "stripeSecretKey": string;
-        "stripePublishableKey": string;
+        appName: string;
     }
     
     export interface DefaultContext

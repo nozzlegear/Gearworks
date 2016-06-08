@@ -4,9 +4,10 @@ import * as joi from "joi";
 import * as boom from "boom";
 import * as pouch from "pouchdb";
 import {IReply, IBoom} from "hapi";
-import {users} from "../../modules/database";
-import {Server, User, Request} from "gearworks";
+import {Users} from "../../modules/database";
 import {strategies} from "../../modules/auth";
+import {Server, User, Request} from "gearworks";
+import {ShopifyApiKey} from "../../modules/config";
 import {humanizeError} from "../../modules/validation";
 import {getRequestDomain} from "../../modules/requests";
 import {IProps as SetupProps} from "../../views/setup/setup";
@@ -118,7 +119,7 @@ export async function setup(server: Server, request: Request, reply: IReply)
     
     const scopes: Enums.AuthScope[] = ["read_orders", "write_orders"]
     const redirect = (getRequestDomain(request) + "/connect/shopify").toLowerCase();
-    const oauthUrl = await buildAuthorizationUrl(scopes, payload.shopUrl, server.app.shopifyApiKey, redirect);
+    const oauthUrl = await buildAuthorizationUrl(scopes, payload.shopUrl, ShopifyApiKey, redirect);
 
     return reply.redirect(oauthUrl);
 }

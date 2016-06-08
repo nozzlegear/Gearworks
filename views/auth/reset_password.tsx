@@ -3,39 +3,38 @@
 import * as React from "react";
 import {DefaultContext} from "gearworks";
 import Layout, {LayoutProps} from "../layout";
+import {Routes} from "../../routes/auth/auth-routes";
 
 export interface IProps extends LayoutProps
 {
-    username?: string;
     error?: string;
+    token: string;
 }
 
-export default function RegisterPage(props: IProps & DefaultContext)
+export default function ResetPasswordPage(props: IProps & DefaultContext)
 {
     return (
         <Layout {...props}>
-            <section id="register">
+            <section id="reset-password">
                 <h1 className="page-title">{props.title}</h1>
                 <div className="row">
                     <div className="col-md-6">
-                        <form className="form form-horizontal well" method="post" action="/auth/register" autoComplete="off">
+                        <form className="form well" method="post" action={Routes.PostResetPassword}>
                             <div className="form-group">
-                                <label className="col-md-2 control-label">{"Email"}</label>
-                                <div className="col-md-10">
-                                    <input className="form-control" type="text" name="username" value={props.username} />
-                                </div> 
+                                <input className="form-control" placeholder={"New Password"} type="password" name="password"/>
                             </div>
                             <div className="form-group">
-                                <label className="col-md-2 control-label">{"Password"}</label>
-                                <div className="col-md-10">
-                                    <input className="form-control" type="password" name="password" />
-                                </div>
+                                <input className="form-control" placeholder={"Retype New Password"} type="password" name="confirmPassword"/>
                             </div>
+                            <input type="hidden" name={"token"} value={props.token} />
                             {props.error ? <p className="error">{props.error}</p> : null}
                             <div className="form-footer">
                                 <button type="submit" className="btn btn-primary">
-                                    {"Register"}
+                                    {"Reset Password"}
                                 </button>
+                                <a href={Routes.GetLogin}>
+                                    {"Know your password?"}
+                                </a>
                             </div>
                         </form>
                     </div>

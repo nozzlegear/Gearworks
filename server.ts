@@ -6,25 +6,25 @@ import * as boom from "boom";
 import * as path from "path"; 
 import * as util from "util";
 import {promisify} from "bluebird";
-import {DatabaseUrl} from "./modules/database";
+import * as config from "./modules/config";
 import {RoutesToRegister} from "./routes/index";
 import {defaults, isError, merge} from "lodash";
 import {Server, ServerApp, DefaultContext} from "gearworks";
 import {IProps as ErrorPageProps} from "./views/errors/error";
 import {DefaultTTL, CacheName, registerCaches} from "./modules/cache";
-import {configureAuth, encryptionSignature, yarSalt} from "./modules/auth";
+import {configureAuth} from "./modules/auth";
 
 //Prepare Hapi server
 const server: Server = new Hapi.Server() as Server;
-const config: Hapi.IServerConnectionOptions = {
-    port: process.env.PORT || 3000,
-    host: process.env.HOST || "localhost",
+const serverConfig: Hapi.IServerConnectionOptions = {
+    port: config.Port || 3000,
+    host: config.Host || "localhost",
     router: {
         isCaseSensitive: false,
         stripTrailingSlash: true
     }
 };
-const connection = server.connection(config);
+const connection = server.connection(serverConfig);
 
 async function registerPlugins()
 {
@@ -43,7 +43,7 @@ async function registerPlugins()
         options: {
             storeBlank: false,
             cookieOptions: {
-                password: yarSalt,
+                password: config.YarSalt,
                 isSecure: server.app.isLive,
                 ttl: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
                 ignoreErrors: true, //tells Hapi that it should not respond with a HTTP 400 error if the session cookie cannot decrypt
@@ -57,33 +57,22 @@ async function registerPlugins()
 
 async function startServer()
 {
-    //Encryption signature is required for authentication.
-    if (!encryptionSignature || encryptionSignature.length < 32)
+    //Validate environment variables
+    Object.getOwnPropertyNames(config).forEach((prop, index, propNames) =>
     {
-        throw new Error("process.env.encryptionSignature must be a 32-char-or-greater random string.");
-    }
-    
-    if (!yarSalt || yarSalt.length < 32)
-    {
-        throw new Error("process.env.yarSalt must be a 32-char-or-greater random string.");
-    }
-    
-    if (!DatabaseUrl)
-    {
-        throw new Error("process.env.couchUrl must be a url pointed to a couchdb or pouchdb installation.");
-    }
+        // Ensure config prop isn't optional
+        if (config.OptionalProps.indexOf(prop) === -1 && !config[prop])
+        {
+            throw new Error(`Configuration property ${prop} cannot be null or empty. Check modules/config.ts to find the correct environment variable key for ${prop}.`);
+        }
+    })
     
     //Configure the server's app state
-    server.app = defaults(require("../gearworks.private.json"), {
-        appName: "Gearworks",
-        rootDir: path.resolve(__dirname),
-        shopifyApiKey: process.env.shopifyApiKey,
-        shopifySecretKey: process.env.shopifySecretKey,
-        stripePublishableKey: process.env.stripePublishableKey,
-        stripeSecretKey: process.env.stripeSecretKey,
+    server.app = {
+        appName: config.AppName,
         isLive: process.env.NODE_ENV === "production",
-        caches: { }
-    } as ServerApp) as ServerApp;
+        rootDir: path.resolve(__dirname),
+    };
     
     await registerPlugins();
     

@@ -3,9 +3,10 @@
 import * as boom from "boom";
 import * as bcrypt from "bcrypt";
 import {Request} from "hapi";
-import {users} from "./database";
+import {Users} from "./database";
 import {v4 as guid} from "node-uuid";
 import {getRawBody} from "./requests";
+import {ShopifySecretKey, EncryptionSignature} from "./config";
 import {Routes as AuthRoutes} from "../routes/auth/auth-routes";
 import {Routes as SetupRoutes} from "../routes/setup/setup-routes";
 import {isAuthenticRequest, isAuthenticWebhook} from "shopify-prime";
@@ -13,9 +14,6 @@ import {Caches, getCacheValue, setCacheValue, deleteCacheValue} from "./cache";
 import {Server, DefaultContext, User, AuthArtifacts, AuthCredentials, AuthCookie} from "gearworks";
 
 export const cookieName = "GearworksAuth"; 
-export const yarSalt: string = process.env.yarSalt;
-export const encryptionSignature = process.env.encryptionSignature;
-
 export const strategies = {
     fullAuth: "full-auth",
     basicAuth: "basic-auth",
@@ -31,7 +29,7 @@ export function configureAuth(server: Server)
         if (request.response.variety === "view")
         {
             const cookie: AuthCookie = request.yar.get(cookieName, false);
-            let context: DefaultContext = request.response.source.context;
+            let context: DefaultContext = request.response.source.context || {};
             
             context.user = {
                 isAuthenticated: !!cookie,
@@ -107,7 +105,7 @@ export function configureAuth(server: Server)
     server.auth.scheme(shopifyRequestScheme, (s, options) => ({
         authenticate: async (request, reply) =>
         {
-            const isAuthentic = await isAuthenticRequest(request.query, server.app.shopifySecretKey);
+            const isAuthentic = await isAuthenticRequest(request.query, ShopifySecretKey);
 
             if (!isAuthentic)
             {
@@ -126,7 +124,7 @@ export function configureAuth(server: Server)
 
             try
             {
-                isAuthentic = await isAuthenticWebhook(request.headers["x-shopify-hmac-sha256"], body, server.app.shopifySecretKey);
+                isAuthentic = await isAuthenticWebhook(request.headers["x-shopify-hmac-sha256"], body, ShopifySecretKey);
             }
             catch (e)
             {
@@ -158,7 +156,7 @@ export function getUserAuth(request: Request)
 {
     const cookie: AuthCookie = request.yar.get(cookieName, false);
     
-    if (!cookie || ! bcrypt.compareSync(encryptionSignature, cookie.encryptionSignature))
+    if (!cookie || ! bcrypt.compareSync(EncryptionSignature, cookie.encryptionSignature))
     {
         return undefined;
     }
@@ -171,7 +169,7 @@ export function getUserAuth(request: Request)
  */
 export async function setUserAuth(request: Request, user: User)
 {
-    const hash = bcrypt.hashSync(encryptionSignature, 10);
+    const hash = bcrypt.hashSync(EncryptionSignature, 10);
     const cookie: AuthCookie = {
         encryptionSignature: hash,
         userId: user._id.toLowerCase(),
@@ -205,6 +203,14 @@ async function getAuthData(cookie: AuthCookie, autoRefreshCache?: boolean)
         userId: cookie.userId,
     };
     const session = await getUserCache(cookie.userId, autoRefreshCache);
+
+    if (!session)
+    {
+        //Session can be null when user data wasn't found in the cache *or* the database.
+        
+        return undefined;
+    }
+
     const result = {
         artifacts: session,
         credentials: credentials,
@@ -238,7 +244,7 @@ async function getUserCache(userId: string, autoRefreshCache: boolean)
     if (!result && autoRefreshCache)
     {
         // Attempt to pull auth data from database.
-        const user = await users.get<User>(userId.toLowerCase());
+        const user = await Users.get<User>(userId.toLowerCase());
         const data: AuthArtifacts = {
             planId: user.planId,
             shopDomain: user.shopifyDomain, 
@@ -251,6 +257,10 @@ async function getUserCache(userId: string, autoRefreshCache: boolean)
         await setCacheValue(Caches.userAuth, userId, data);
 
         return data;
+    }
+    else if (!result)
+    {
+        return undefined;
     }
 
     return result.item;

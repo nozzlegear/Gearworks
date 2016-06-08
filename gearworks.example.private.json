@@ -1,7 +1,15 @@
 {
-    "appName":              "Gearworks",
-    "shopifyApiKey":        "abcdefg",
-    "shopifySecretKey":     "abcdefg",
-    "stripeSecretKey":      "abcdefg",
-    "stripePublishableKey": "abcdefg"
+    "gearworks-appName":              "Gearworks",
+    "gearworks-yarSalt":              "abcdefg",
+    "gearworks-couchUrl":             "abcdefg",
+    "gearworks-port":                 3000,
+    "gearworks-host":                 "localhost",
+    "gearworks-domain":               "www.example.com",
+    "gearworks-shopifyApiKey":        "abcdefg",
+    "gearworks-shopifySecretKey":     "abcdefg",
+    "gearworks-stripeSecretKey":      "abcdefg",
+    "gearworks-stripePublishableKey": "abcdefg",
+    "gearworks-encryptionSignature":  "signature",
+    "gearworks-sparkpostKey":         "",
+    "gearworks-emailDomain":          ""
 }

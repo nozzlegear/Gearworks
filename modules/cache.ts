@@ -1,7 +1,7 @@
 /// <reference path="./../typings/typings.d.ts" />
 
 import * as Promise from "bluebird";
-import {DatabaseUrl} from "./database";
+import {DatabaseUrl} from "./config";
 import {Server, CacheConfig} from "gearworks";
 import {Client, CachePolicy, CachedItem} from "catbox";
 

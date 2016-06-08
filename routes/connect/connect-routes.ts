@@ -1,11 +1,12 @@
 /// <reference path="./../../typings/index.d.ts" />
 
 import {IBoom, IReply, Response} from "hapi";
-import {users} from "../../modules/database";
+import {Users} from "../../modules/database";
 import {findPlan} from "../../modules/plans";
 import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
 import {strategies, setUserAuth} from "../../modules/auth";
+import {ShopifyApiKey, ShopifySecretKey} from "../../modules/config";
 import {getRequestDomain,getRequestHost} from "../../modules/requests";
 import {Routes as WebhookRoutes} from "../../routes/webhooks/webhook-routes";
 import {
@@ -55,11 +56,11 @@ export function registerRoutes(server: Server)
 export async function connectShopify(server: Server, request: Request, reply: IReply): Promise<IBoom | Response>
 {
     const query: {code: string, shop: string, hmac: string} = request.query;
-    const accessToken = await authorize(query.code, query.shop, server.app.shopifyApiKey, server.app.shopifySecretKey);
+    const accessToken = await authorize(query.code, query.shop, ShopifyApiKey, ShopifySecretKey);
     
     // Grab the user's shop name and id and their database record
     const shopData = (await new Shops(query.shop, accessToken).get({fields: ["name,id"]}));
-    let user = await users.get(request.auth.credentials.userId) as User;
+    let user = await Users.get(request.auth.credentials.userId) as User;
     
     // Store the user's shop data
     user.shopifyDomain = query.shop;
@@ -67,7 +68,7 @@ export async function connectShopify(server: Server, request: Request, reply: IR
     user.shopifyShopName = shopData.name;
     user.shopifyShopId = shopData.id;
     
-    const response = await users.put(user);
+    const response = await Users.put(user);
     
     if (!response.ok)
     {
@@ -81,7 +82,7 @@ export async function connectShopify(server: Server, request: Request, reply: IR
 
     const redirect = reply.redirect("/");
 
-    if (getRequestHost(request).toLowerCase() === "localhost")
+    if (!server.app.isLive || getRequestHost(request).toLowerCase() === "localhost")
     {
         // Don't create any webhooks unless this app is running on a real domain. Webhooks cannot point to localhost.
         return redirect;
@@ -131,10 +132,10 @@ export async function activateShopifyPlan(server: Server, request: Request, repl
     await service.activate(charge.id);
     
     // Update the user's planid
-    let user = await users.get(request.auth.credentials.userId) as User;
+    let user = await Users.get(request.auth.credentials.userId) as User;
     user.planId = plan.id;
     
-    const update = await users.put(user);
+    const update = await Users.put(user);
     
     if (!update.ok)
     {

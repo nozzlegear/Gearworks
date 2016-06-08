@@ -5,7 +5,7 @@ import {Server, Request} from "gearworks";
 import {IReply, IBoom, Response} from "hapi";
 import {strategies} from "../../modules/auth";
 import {deleteCacheValue, Caches} from "../../modules/cache";
-import {findUserByShopId, users} from "../../modules/database";
+import {findUserByShopId, Users} from "../../modules/database";
 
 export const Routes = {
      GetAppUninstalled: "/webhooks/app-uninstalled",
@@ -44,7 +44,7 @@ export async function handleAppUninstalled(server: Server, request: Request, rep
     user.shopifyShopId = undefined;
     user.shopifyShopName = undefined;
 
-    const update = await users.put(user);
+    const update = await Users.put(user);
 
     if (!update.ok)
     {

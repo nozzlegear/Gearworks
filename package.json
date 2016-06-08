@@ -64,6 +64,8 @@
     "joi": "^8.1.0",
     "lodash": "^4.12.0",
     "node-uuid": "^1.4.7",
+    "nodemailer": "^2.4.2",
+    "nodemailer-sparkpost-transport": "^0.1.2",
     "pouchdb": "^5.3.2",
     "pouchdb-find": "^0.10.0",
     "react": "^15.1.0",

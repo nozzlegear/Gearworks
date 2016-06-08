@@ -1,9 +1,10 @@
 "use strict";
 
-const gulp        = require("gulp");
-const chokidar    = require("chokidar");
-const shell       = require("gulp-shell");
-const server      = require("gulp-develop-server");
+const gulp            = require("gulp");
+const chokidar        = require("chokidar");
+const shell           = require("gulp-shell");
+const server          = require("gulp-develop-server");
+const gearworksConfig = require("./gearworks.private.json");
 
 //Tasks
 const sassTask = require("./gulp/sass");
@@ -30,11 +31,11 @@ gulp.task("default", ["ts", "sass"]);
 
 gulp.task("watch", ["default"], (cb) =>
 {
-    server.listen({path: "bin/server.js"});
+    server.listen({path: "bin/server.js", env: gearworksConfig});
     
     // Gulp.watch in 3.x is broken, watching more files than it should. Using chokidar instead.
     // https://github.com/gulpjs/gulp/issues/651
-    chokidar.watch(["bin/**/*.js", "gearworks.private.json"], {ignoreInitial: true}).on("all", (event, path) =>
+    chokidar.watch(["bin/**/*.js"], {ignoreInitial: true}).on("all", (event, path) =>
     {
         server.restart();
     });
