@@ -19,7 +19,7 @@ export default function ResetPasswordPage(props: IProps & DefaultContext)
                 <h1 className="page-title">{props.title}</h1>
                 <div className="row">
                     <div className="col-md-6">
-                        <form className="form well" method="post" action={Routes.PostResetPassword}>
+                        <form className="form well" method="post" autoComplete={"off"} action={`${Routes.PostResetPassword}?token=${props.token}`}>
                             <div className="form-group">
                                 <input className="form-control" placeholder={"New Password"} type="password" name="password"/>
                             </div>
