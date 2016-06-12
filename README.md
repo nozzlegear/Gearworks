@@ -4,6 +4,8 @@ Gearworks is a template for new Shopify apps using the "HNTR" stack — Hapi + N
 
 **This app template is a work in progress. Please check back soon!**
 
+![Gearworks](https://i.imgur.com/DbtWFY5.gif)
+
 ## Documentation
 
 Note: docs are incomplete and only serve as notes for the real documentation once the template reaches v1.
