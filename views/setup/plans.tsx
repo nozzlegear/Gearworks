@@ -17,7 +17,7 @@ export default function PlansPage(props: IProps & DefaultContext)
             <form className="plan" method="POST">
                 <div className={`plan-header plan-index-${index}`}>
                     <h3 className="plan-title">{`${plan.name}`}</h3>
-                    <h5 className="plan-pricing">{`$${plan.price.toFixed(2)} /${plan.interval}`}</h5>
+                    <h5 className="plan-pricing">{`$${plan.price.toFixed(2)} /month`}</h5>
                 </div>
                 <div className="plan-features">
                     <ul>

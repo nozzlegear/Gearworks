@@ -227,6 +227,7 @@ async function setUserCache(user: User)
         shopDomain: user.shopifyDomain,
         shopToken: user.shopifyAccessToken,
         shopId: user.shopifyShopId,
+        chargeId: user.chargeId,
     };
 
     await setCacheValue(Caches.userAuth, user._id, result);
@@ -251,6 +252,7 @@ async function getUserCache(userId: string, autoRefreshCache: boolean)
             shopName: user.shopifyShopName,
             shopToken: user.shopifyAccessToken,
             shopId: user.shopifyShopId,
+            chargeId: user.chargeId,
         };
 
         // Store this data back in the cache to prevent future db queries

@@ -12,7 +12,8 @@ import {humanizeError} from "../../modules/validation";
 import {getRequestDomain} from "../../modules/requests";
 import {IProps as SetupProps} from "../../views/setup/setup";
 import {IProps as PlansProps} from "../../views/setup/plans";
-import {plans as activePlans, findPlan} from "../../modules/plans";
+import {Routes as ConnectRoutes} from "../connect/connect-routes";
+import {Plans as activePlans, findPlan} from "../../modules/plans";
 import {
     Enums, 
     isValidShopifyDomain, 
@@ -172,8 +173,8 @@ export async function selectPlan(server: Server, request: Request, reply: IReply
         name: plan.name,
         price: plan.price,
         test: !server.app.isLive,
-        trial_days: 0,
-        return_url: (getRequestDomain(request) + `/connect/shopify/activate?plan_id=${plan.id}`).toLowerCase(),
+        trial_days: plan.trialDays,
+        return_url: `${getRequestDomain(request)}${ConnectRoutes.GetShopifyActivate}?plan_id=${plan.id}`.toLowerCase(),
     });
     
     //Send the user to the confirmation url

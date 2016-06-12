@@ -69,6 +69,7 @@ declare module "gearworks"
         shopDomain: string;
         shopToken: string;
         shopId: number;
+        chargeId: number;
         planId: string;
     }
     
@@ -83,7 +84,7 @@ declare module "gearworks"
         
         price: number;
         
-        interval: "month" | "year";
+        trialDays: number;
         
         /**
          * A humanized description that will be displayed on the pricing page.
@@ -132,6 +133,11 @@ declare module "gearworks"
          * The user's plan id.
          */
         planId?: string;
+
+        /**
+         * The user's Shopify charge id.
+         */
+        chargeId?: number;
     }
 
     /**

@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import {map} from "lodash";
+import {Routes as AuthRoutes} from "../routes/auth/auth-routes";
+import {Routes as AccountRoutes} from "../routes/account/account-routes";
 import {DefaultContext} from "gearworks";
 
 export default function Nav(props: DefaultContext)
@@ -30,18 +32,19 @@ export default function Nav(props: DefaultContext)
                         {
                             !props.user.isAuthenticated ?
                             [
-                                <li key="register-link"><a href="/auth/register">{"Create account"}</a></li>,
-                                <li key="sign-in-link"><a href="/auth/login">{"Sign in"}</a></li>,
+                                <li key="register-link"><a href={AuthRoutes.GetRegister}>{"Create account"}</a></li>,
+                                <li key="sign-in-link"><a href={AuthRoutes.GetLogin}>{"Sign in"}</a></li>,
                             ] :
                             <li className="dropdown">
-                                <a aria-expanded="false" className="dropdown-toggle" data-toggle="dropdown" href="#" id="themes">
+                                <a aria-expanded="false" className="dropdown-toggle" data-toggle="dropdown" href="#" >
                                     {`${props.user.username} `}
                                     <span className="caret"></span>
                                 </a>
                                 <ul className="dropdown-menu" aria-labelledby="themes">
-                                    <li><a href="/account">{"Account Settings"}</a></li>
+                                    <li><a href={AccountRoutes.GetSettings}>{"Account Settings"}</a></li>
+                                    <li><a href={AccountRoutes.GetBilling}>{"Billing Settings"}</a></li>
                                     <li className="divider"></li>
-                                    <li><a href="/auth/logout">{"Sign out"}</a></li>
+                                    <li><a href={AuthRoutes.GetLogout}>{"Sign out"}</a></li>
                                 </ul>
                             </li>
                         }

@@ -13,7 +13,7 @@ declare module "hapi"
     
     export interface IReply 
     {
-        <T>(err: Error | Boom.BoomError, result?: string | number | boolean | Buffer | stream.Stream | IPromise<T> | T, credentialData?: any): IBoom;
+        <T>(err: Boom.BoomError, result?: string | number | boolean | Buffer | stream.Stream | IPromise<T> | T, credentialData?: any): Response;
     }    
 
     interface ServerCache

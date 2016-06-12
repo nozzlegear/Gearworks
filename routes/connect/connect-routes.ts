@@ -6,9 +6,10 @@ import {findPlan} from "../../modules/plans";
 import {Server, Request, User} from "gearworks";
 import {badRequest, expectationFailed} from "boom";
 import {strategies, setUserAuth} from "../../modules/auth";
+import {Routes as SetupRoutes} from "../setup/setup-routes";
 import {ShopifyApiKey, ShopifySecretKey} from "../../modules/config";
 import {getRequestDomain,getRequestHost} from "../../modules/requests";
-import {Routes as WebhookRoutes} from "../../routes/webhooks/webhook-routes";
+import {Routes as WebhookRoutes} from "../webhooks/webhook-routes";
 import {
     isAuthenticRequest, 
     authorize, 
@@ -126,7 +127,7 @@ export async function activateShopifyPlan(server: Server, request: Request, repl
         console.error("Recurring charge error", e);
         
         // Charge has expired or was declined. Send the user to select a new plan.
-        return reply.redirect("/setup/plans");
+        return reply.redirect(SetupRoutes.GetPlans);
     }
     
     await service.activate(charge.id);
@@ -134,6 +135,7 @@ export async function activateShopifyPlan(server: Server, request: Request, repl
     // Update the user's planid
     let user = await Users.get(request.auth.credentials.userId) as User;
     user.planId = plan.id;
+    user.chargeId = charge.id;
     
     const update = await Users.put(user);
     
