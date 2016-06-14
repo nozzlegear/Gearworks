@@ -56,6 +56,7 @@
     "boom": "^3.2.0",
     "catbox": "^7.1.1",
     "catbox-memory": "^2.0.2",
+    "crumb": "^6.0.1",
     "firebase": "^3.0.2",
     "hapi": "^13.4.1",
     "hapi-async-handler": "^1.0.3",

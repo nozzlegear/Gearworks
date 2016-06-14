@@ -4,6 +4,7 @@ import * as React from "react";
 import {DefaultContext} from "gearworks";
 import Layout, {LayoutProps} from "../layout";
 import {Routes} from "../../routes/auth/auth-routes";
+import {Crumb} from "../crumb";
 import {SparkpostKey, EmailDomain} from "../../modules/config";
 
 export interface IProps extends LayoutProps
@@ -21,6 +22,7 @@ export default function LoginPage(props: IProps & DefaultContext)
                 <div className="row">
                     <div className="col-md-6">
                         <form className="form form-horizontal well" method="post" action={Routes.PostLogin}>
+                            <Crumb value={props.crumb}/>
                             <div className="form-group">
                                 <label className="col-md-2 control-label">{"Email"}</label>
                                 <div className="col-md-10">

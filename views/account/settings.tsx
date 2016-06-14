@@ -1,6 +1,7 @@
 /// <reference path="./../../typings/typings.d.ts" />
 
 import * as React from "react";
+import {Crumb} from "../crumb";
 import {DefaultContext} from "gearworks";
 import Layout, {LayoutProps} from "../layout";
 import {Routes} from "../../routes/account/account-routes";
@@ -20,6 +21,7 @@ export default function SettingsPage(props: IProps & DefaultContext)
                 <div className="row">
                     <div className="col-md-6">
                         <form className="form form-horizontal well" method="post" action={Routes.PostSettings}>
+                            <Crumb value={props.crumb} />
                             <div className="form-group">
                                 <label className="col-md-4 control-label">{"Old Password"}</label>
                                 <div className="col-md-8">

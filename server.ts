@@ -36,6 +36,9 @@ async function registerPlugins()
     
     //Adds async support to Hapi route handlers.
     await server.register(require("hapi-async-handler"));
+
+    //Crumb gives Hapi automatic CSRF protection.
+    await server.register(require("crumb"));
     
     //Yar is a cookie management plugin for Hapi.
     await server.register({

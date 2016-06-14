@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {map} from "lodash";
+import {Crumb} from "../crumb";
 import {Plans} from "../../modules/plans";
 import Layout, {LayoutProps} from "../layout";
 import {DefaultContext, Plan} from "gearworks";
@@ -29,6 +30,7 @@ export default function BillingPage(props: IProps & DefaultContext)
                 <div className="row">
                     <div className="col-md-6">
                         <form className="form well" method="post" action={Routes.PostBilling}>
+                            <Crumb value={props.crumb} />
                             {!props.trialEndsOn ? null : 
                                 <div className="underline">
                                     <strong>{"Trial Ends On"}</strong>

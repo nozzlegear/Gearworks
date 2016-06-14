@@ -1,6 +1,7 @@
 /// <reference path="./../../typings/typings.d.ts" />
 
 import {map} from "lodash";
+import {Crumb} from "../crumb";
 import * as React from "react";
 import Layout, {LayoutProps} from "../layout";
 import {DefaultContext, Plan} from "gearworks";
@@ -15,6 +16,7 @@ export default function PlansPage(props: IProps & DefaultContext)
     const plans = map(props.plans, (plan, index) => 
         <div key={plan.id} className={`col-md-4`}>
             <form className="plan" method="POST">
+                <Crumb value={props.crumb} />
                 <div className={`plan-header plan-index-${index}`}>
                     <h3 className="plan-title">{`${plan.name}`}</h3>
                     <h5 className="plan-pricing">{`$${plan.price.toFixed(2)} /month`}</h5>

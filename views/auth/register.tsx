@@ -1,6 +1,7 @@
 /// <reference path="./../../typings/typings.d.ts" />
 
 import * as React from "react";
+import {Crumb} from "../crumb";
 import {DefaultContext} from "gearworks";
 import Layout, {LayoutProps} from "../layout";
 
@@ -19,6 +20,7 @@ export default function RegisterPage(props: IProps & DefaultContext)
                 <div className="row">
                     <div className="col-md-6">
                         <form className="form form-horizontal well" method="post" action="/auth/register" autoComplete="off">
+                            <Crumb value={props.crumb} />
                             <div className="form-group">
                                 <label className="col-md-2 control-label">{"Email"}</label>
                                 <div className="col-md-10">

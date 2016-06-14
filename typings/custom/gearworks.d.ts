@@ -49,12 +49,19 @@ declare module "gearworks"
     export interface DefaultContext
     {
         appName?: string;
+        
         isLive?: boolean;
+
         user?: {
             userId: string | number;
             username: string;
             isAuthenticated: boolean;
         }
+
+        /**
+         * A Crumb string value that must be included on all submitted forms as an input with the name of 'crumb'.
+         */
+        crumb?: string;
     }
     
     export interface AuthCredentials

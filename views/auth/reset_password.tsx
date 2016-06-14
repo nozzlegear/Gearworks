@@ -1,6 +1,7 @@
 /// <reference path="./../../typings/typings.d.ts" />
 
 import * as React from "react";
+import {Crumb} from "../crumb";
 import {DefaultContext} from "gearworks";
 import Layout, {LayoutProps} from "../layout";
 import {Routes} from "../../routes/auth/auth-routes";
@@ -20,6 +21,7 @@ export default function ResetPasswordPage(props: IProps & DefaultContext)
                 <div className="row">
                     <div className="col-md-6">
                         <form className="form well" method="post" autoComplete={"off"} action={`${Routes.PostResetPassword}?token=${props.token}`}>
+                            <Crumb value={props.crumb} />
                             <div className="form-group">
                                 <input className="form-control" placeholder={"New Password"} type="password" name="password"/>
                             </div>

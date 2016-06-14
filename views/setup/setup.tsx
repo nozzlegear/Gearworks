@@ -1,6 +1,7 @@
 /// <reference path="./../../typings/typings.d.ts" />
 
 import * as React from "react";
+import {Crumb} from "../crumb";
 import {DefaultContext} from "gearworks";
 import Layout, {LayoutProps} from "../layout";
 
@@ -19,6 +20,7 @@ export default function SetupPage(props: IProps & DefaultContext)
                 <div className="row">
                     <div className="col-md-6">
                         <form className="form form-horizontal well" method="post" action="/setup">
+                            <Crumb value={props.crumb} />
                             <div className="form-group">
                                 <div className="col-md-12">
                                     <input className="form-control" type="text" name="shopUrl" value={props.shopUrl} placeholder="Your *.myshopify.com URL" />
