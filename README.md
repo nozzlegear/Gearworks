@@ -21,7 +21,7 @@ Note: docs are incomplete and only serve as notes for the real documentation onc
 
 **Q**: I get a 403 forbidden response whenever a form is submitted!
 
-**A:**: Gearworks uses [Crumb](https://npmjs.com/package/crumb) for quick, easy and secure protection against common Cross-site Request Forgery (CSRF) attacks. Crumb's goal is to help prevent malicious code from executing via HTTP requests. To do this, Crumb issues a secure token value in a cookie on every request, and then compares that value with a another secure token that gets sent back to the server when a form is submitted. If those values don't line up, Crumb returns a 403 Forbidden response to prevent a CSRF attack.
+**A:**: Gearworks uses [Crumb](https://npmjs.com/package/crumb) for quick, easy and secure protection against common Cross-site Request Forgery (CSRF) attacks. Crumb's goal is to help prevent malicious code from executing via HTTP requests. To do this, Crumb issues a secure token value in a cookie on every request, and then compares that value with another secure token that gets sent back to the server when a form is submitted. If those values don't line up, Crumb returns a 403 Forbidden response to prevent a CSRF attack.
 
 If you're running into problems with Crumb validation, you probably forgot to send the Crumb token back to the server when your form submits. Crumb passes that token to your React view through `props.crumb`, and Gearworks has a special component named `Crumb` to render the necessary form field:   
 
