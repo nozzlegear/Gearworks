@@ -55,14 +55,34 @@ export function configureAuth(server: Server)
     server.auth.scheme(fullScheme, (s, options) => ({
         authenticate: async (request, reply) => 
         {
-            const auth = await getUserAuth(request);
-
-            if (!auth)
+            function unauthorized()
             {
                 const response = request.generateResponse().redirect(AuthRoutes.GetLogin);
                 
+
                 // Response is ignored if error is passed in as first param
                 return reply(null, response);
+            }
+
+            let auth: {credentials: AuthCredentials; artifacts: AuthArtifacts};
+
+            try
+            {
+                auth = await getUserAuth(request);
+            }
+            catch (e)
+            {
+                if (e.status === 404)
+                {
+                    return unauthorized();
+                }
+
+                return reply(boom.wrap(e));
+            }
+
+            if (!auth)
+            {
+                return unauthorized();
             }
             
             if (!auth.artifacts.shopToken)
@@ -86,16 +106,34 @@ export function configureAuth(server: Server)
     server.auth.scheme(basicScheme, (s, options) => ({
         authenticate: async (request, reply) =>
         {
-            const auth = await getUserAuth(request);
-            function generateRedirect()
+            function unauthorized()
             {
-                return request.generateResponse().redirect(AuthRoutes.GetLogin);
+                const response = request.generateResponse().redirect(AuthRoutes.GetLogin);
+                
+
+                // Response is ignored if error is passed in as first param
+                return reply(null, response);
+            }
+
+            let auth: {credentials: AuthCredentials; artifacts: AuthArtifacts};
+
+            try
+            {
+                auth = await getUserAuth(request);
+            }
+            catch (e)
+            {
+                if (e.status === 404)
+                {
+                    return unauthorized();
+                }
+
+                return reply(boom.wrap(e));
             }
 
             if (!auth)
             {
-                // Response is ignored if error is passed in as first param
-                return reply(null, generateRedirect());
+                return unauthorized();
             }
             
             return reply.continue(auth);
@@ -105,7 +143,16 @@ export function configureAuth(server: Server)
     server.auth.scheme(shopifyRequestScheme, (s, options) => ({
         authenticate: async (request, reply) =>
         {
-            const isAuthentic = await isAuthenticRequest(request.query, ShopifySecretKey);
+            let isAuthentic: boolean;
+
+            try
+            {
+                isAuthentic = await isAuthenticRequest(request.query, ShopifySecretKey);
+            }
+            catch (e)
+            {
+                return reply(boom.wrap(e));
+            }
 
             if (!isAuthentic)
             {
@@ -119,9 +166,18 @@ export function configureAuth(server: Server)
     server.auth.scheme(shopifyWebhookScheme, (s, options) => ({
         authenticate: async (request, reply) =>
         {
-            const body = await getRawBody(request);
+            let body: string;
             let isAuthentic: boolean;
 
+            try
+            {
+                body = await getRawBody(request);
+            }
+            catch (e)
+            {
+                return boom.wrap(e);
+            }
+            
             try
             {
                 isAuthentic = await isAuthenticWebhook(request.headers["x-shopify-hmac-sha256"], body, ShopifySecretKey);
@@ -190,7 +246,7 @@ export async function setUserAuth(request: Request, user: User)
     return request.yar.set(cookieName, cookie);
 }
 
-async function getAuthData(cookie: AuthCookie, autoRefreshCache?: boolean)
+async function getAuthData(cookie: AuthCookie, autoRefreshCache?: boolean): Promise<{artifacts: AuthArtifacts; credentials: AuthCredentials}>
 {
     // Auto refresh cache by default
     if (typeof autoRefreshCache === "undefined")
@@ -238,7 +294,7 @@ async function setUserCache(user: User)
 /**
  * Gets user data from the cache.
  */
-async function getUserCache(userId: string, autoRefreshCache: boolean)
+async function getUserCache(userId: string, autoRefreshCache: boolean): Promise<AuthArtifacts>
 {
     const result = await getCacheValue<AuthArtifacts>(Caches.userAuth, userId);
 
