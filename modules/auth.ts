@@ -2,7 +2,6 @@
 
 import * as boom from "boom";
 import * as bcrypt from "bcrypt";
-import {Request} from "hapi";
 import {Users} from "./database";
 import {v4 as guid} from "node-uuid";
 import {getRawBody} from "./requests";
@@ -11,7 +10,7 @@ import {Routes as AuthRoutes} from "../routes/auth/auth-routes";
 import {Routes as SetupRoutes} from "../routes/setup/setup-routes";
 import {isAuthenticRequest, isAuthenticWebhook} from "shopify-prime";
 import {Caches, getCacheValue, setCacheValue, deleteCacheValue} from "./cache";
-import {Server, DefaultContext, User, AuthArtifacts, AuthCredentials, AuthCookie} from "gearworks";
+import {Server, DefaultContext, Request, User, AuthArtifacts, AuthCredentials, AuthCookie} from "gearworks";
 
 export const cookieName = "GearworksAuth"; 
 export const strategies = {
@@ -24,23 +23,22 @@ export const strategies = {
 export function configureAuth(server: Server)
 {
     //Configure a preresponse handler that will add the user's auth information to all view contexts
-    server.ext("onPreResponse", (request, reply) =>
+    server.ext("onPreResponse", (request: Request, reply) =>
     {
         if (request.response.variety === "view")
         {
-            const cookie: AuthCookie = request.yar.get(cookieName, false);
-            let context: DefaultContext = request.response.source.context || {};
+            const context: DefaultContext = request.response.source.context || {};
             
             context.user = {
-                isAuthenticated: !!cookie,
+                isAuthenticated: request.auth.isAuthenticated,
                 userId: undefined,
                 username: undefined,
             }
             
-            if (cookie)
+            if (request.auth.isAuthenticated)
             {
-                context.user.userId = cookie.userId; 
-                context.user.username = cookie.username;
+                context.user.userId = request.auth.credentials.userId; 
+                context.user.username = request.auth.credentials.username;
             }
         }
         
