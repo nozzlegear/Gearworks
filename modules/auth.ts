@@ -1,7 +1,7 @@
 /// <reference path="./../typings/typings.d.ts" />
 
 import * as boom from "boom";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import {Users} from "./database";
 import {v4 as guid} from "node-uuid";
 import {getRawBody} from "./requests";
