@@ -43,6 +43,10 @@
   version "9.0.32"
   resolved "https://registry.yarnpkg.com/@types/joi/-/joi-9.0.32.tgz#da601241c53dea04fe55c5a4aadb3ed9a3c7ad86"
 
+"@types/jwt-simple":
+  version "0.5.32"
+  resolved "https://registry.yarnpkg.com/@types/jwt-simple/-/jwt-simple-0.5.32.tgz#e8c417a76201051ac3fe440ca562db183add54e7"
+
 "@types/lodash":
   version "4.14.38"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.38.tgz#fcbd51e740c5e260652cad975dd26c5c4151cb11"
@@ -86,6 +90,10 @@
   dependencies:
     "@types/node" "*"
     "@types/nodemailer" "*"
+
+"@types/qs":
+  version "6.2.30"
+  resolved "https://registry.yarnpkg.com/@types/qs/-/qs-6.2.30.tgz#139e247511ee3b9be539cdd553c8fdb33c1f624e"
 
 "@types/react", "@types/react@*":
   version "0.14.44"
@@ -2775,7 +2783,7 @@ ipaddr.js@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ipaddr.js/-/ipaddr.js-1.1.1.tgz#c791d95f52b29c1247d5df80ada39b8a73647230"
 
-iron@4.x.x:
+iron, iron@4.x.x:
   version "4.0.4"
   resolved "https://registry.yarnpkg.com/iron/-/iron-4.0.4.tgz#c1f8cc4c91454194ab8920d9247ba882e528061a"
   dependencies:
@@ -3118,6 +3126,10 @@ jsprim@^1.2.2:
 jsuri@^1.3.1:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/jsuri/-/jsuri-1.3.1.tgz#cd93fc6a87b255142cb7b0f479f00517ab9395ed"
+
+jwt-simple:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/jwt-simple/-/jwt-simple-0.5.0.tgz#06b1d5f5c2e34aca56746166f7e41e932a10e573"
 
 kilt@2.x.x:
   version "2.0.2"
@@ -4326,7 +4338,7 @@ q@^1.1.2:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/q/-/q-1.4.1.tgz#55705bcd93c5f3673530c2c2cbc0c2b3addc286e"
 
-qs@~6.3.0:
+qs, qs@~6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.3.0.tgz#f403b264f23bc01228c74131b407f18d5ea5d442"
 

@@ -1,14 +1,23 @@
-// Polyfill fetch
-require("node-fetch");
-
 import * as path from "path";
 import * as express from "express";
 import { BoomError, wrap } from "boom";
+import { VERSION } from "./modules/constants";
 import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
+
+// Server configurations
+import configureDatabase from "./modules/database";
+import configureCache from "./modules/cache";
+import configureRoutes from "./routes";
 
 const app = express();
 
 async function startServer() {
+    app.use((req, res, next) => {
+        res.setHeader("x-powered-by", `Gearworks v${VERSION} (https://github.com/nozzlegear/gearworks)`);
+
+        next();
+    });
+
     if (process.argv.some(arg => arg === "--dev")) {
         // Create a webpack dev server
         const config = require(path.resolve(__dirname, "..", "webpack.config"));
@@ -17,6 +26,7 @@ async function startServer() {
 
         app.use(require('webpack-dev-middleware')(compiler, {
             publicPath: config.output.publicPath,
+            noInfo: true,
             watchOptions: {
                 poll: true
             },
@@ -34,6 +44,11 @@ async function startServer() {
     // Set up request body parsers
     app.use(parseJson());
     app.use(parseUrlEncoded({ extended: true }));
+
+    // Configure the server
+    await configureCache();
+    await configureDatabase();
+    await configureRoutes(app);
 
     // Wildcard route must be registered after all other routes.
     app.get("*", (req, res) => {
@@ -65,8 +80,11 @@ async function startServer() {
 
 startServer().then(() => {
     // Start the server
-    app.listen(process.env.PORT || 3000, process.env.HOST || "localhost", () => {
-        console.log("Server listening on port 3000");
+    const port = process.env.PORT || 3000;
+    const host = process.env.HOST || "localhost";
+
+    app.listen(port, host, () => {
+        console.log(`Server listening on ${host}:${port}`);
     })
 }).catch(e => {
     console.error("Error starting server.", e);

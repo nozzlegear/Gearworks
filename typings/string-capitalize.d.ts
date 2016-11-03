@@ -1,5 +1,4 @@
-declare module "string-capitalize"
-{
+declare module "string-capitalize" {
     function capitalize(s: string): string;
     
     export = capitalize;

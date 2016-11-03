@@ -1,13 +1,10 @@
-/// <reference path="./../typings/index.d.ts" />
-
-import {find} from "lodash";
-import {Plan} from "gearworks";
+import { Plan } from "gearworks";
 
 /**
  * A list of plans that a new user can subscribe to, or a current user can switch to.
  * All plans in this list will appear on the pricing page.
  */
-export const Plans: Plan[] = [
+const Plans: Plan[] = [
     {
         id: "0696abc9-43e2-4915-822a-895de5ede035",
         price: 9.00,
@@ -34,6 +31,8 @@ export const Plans: Plan[] = [
     },
 ]
 
+export default Plans;
+
 /**
  * A list of plans that were previously available and possibly still in use by one or more users.
  * No plan in this list will appear on the pricing page.
@@ -47,10 +46,9 @@ export const RetiredPlans: Plan[] = [
  */
 export function findPlan(id: string) 
 {
-    const plan = find(Plans, p => p.id === id) || find(RetiredPlans, p => p.id === id);
+    const plan = Plans.filter(p => p.id === id) || RetiredPlans.filter(p => p.id === id);
     
-    if (!plan)
-    {
+    if (!plan) {
         throw new Error(`Unable to find plan with id of ${id}.`);
     }
     
