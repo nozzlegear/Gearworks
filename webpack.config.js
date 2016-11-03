@@ -15,48 +15,45 @@ const pkg          = require("./package.json");
 const lodashPack   = require("lodash-webpack-plugin");
 const process      = require("process");
 const path         = require("path");
+const dev          = process.argv.some(arg => arg === "--dev");
 
 const config = {
     entry: [
-        path.join(__dirname, "client/app.tsx"),
-    ],
+        dev ? 'webpack-hot-middleware/client' : undefined,
+        "./client/app",
+    ].filter(arg => !!arg),
     output: {
         path: path.join(__dirname, "dist"),
-        publicPath: path.join(__dirname, "dist"), //Must be set for webpack-dev-server
+        // Important: publicPath must begin with a / but must not end with one. Else hot module replacement won't find updates.
+        publicPath: "/dist", 
         filename: "app.js",
     },
     resolve: {
         root:  process.cwd(),
-        // Add '.ts' and '.tsx' as resolvable extensions.
-        extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js"],
+        extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js", ".jsx"],
     },
     externals: { },
     devtool: "source-map",
     plugins: [
-        new lodashPack,
-        new webpack.optimize.OccurenceOrderPlugin,
+        dev ? new webpack.HotModuleReplacementPlugin() : undefined, 
+        dev ? new webpack.NoErrorsPlugin() : undefined,
+        new lodashPack(),
+        new webpack.optimize.OccurenceOrderPlugin(),
         new webpack.DefinePlugin({
             "_VERSION": `"${pkg.version}"`,
+            "NODE_ENV": process.env.NODE_ENV || "development",
         })
-    ],
+    ].filter(arg => !!arg),
     module: {
         loaders: [
             { 
                 test: /\.tsx?$/i, 
-                loader: 'awesome-typescript-loader',
-                query: {
-                    useBabel: true,
-                    useCache: true
-                }
+                loaders: [dev ? "react-hot" : undefined, "babel", 'awesome-typescript-loader?useCache=true'].filter(arg => !!arg),
             },
             {
-                loader: 'babel-loader',
-                test: /\.js$/i,
-                exclude: /node_modules/,
-                query: {
-                    plugins: ['lodash'],
-                    presets: ['es2015'],
-                },
+                loaders: [dev ? "react-hot" : undefined, "babel"].filter(arg => !!arg),
+                test: /\.jsx?$/i,
+                include: path.join(__dirname, 'client')
             },
             {
                 test: /\.css$/i,
@@ -80,18 +77,9 @@ const config = {
         ]
     },
     postcss: () => [precss, autoprefixer],
-    watchOptions: {
-        poll: true,
-    }
 }
 
-if (process.argv.some(arg => arg === "--dev")) {
-    config.entry.unshift('webpack-hot-middleware/client');
-    config.plugins.unshift(new webpack.HotModuleReplacementPlugin(), new webpack.NoErrorsPlugin())
-}
-
-if (process.env.NODE_ENV === "production")
-{
+if (process.env.NODE_ENV === "production") {
     config.plugins.push(new webpack.optimize.UglifyJsPlugin({
         compress: {
             warnings: false,

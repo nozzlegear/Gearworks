@@ -10,15 +10,19 @@ const app = express();
 
 async function startServer() {
     if (process.argv.some(arg => arg === "--dev")) {
-        console.log("Dev mode, starting webpack server.");
-
         // Create a webpack dev server
         const config = require(path.resolve(__dirname, "..", "webpack.config"));
         const webpack = require("webpack");
         const compiler = webpack(config);
 
         app.use(require('webpack-dev-middleware')(compiler, {
-            publicPath: config.output.publicPath
+            publicPath: config.output.publicPath,
+            watchOptions: {
+                poll: true
+            },
+            stats: {
+                colors: true
+            }
         }));
 
         app.use(require('webpack-hot-middleware')(compiler));

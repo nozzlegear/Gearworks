@@ -1,27 +1,17 @@
-import * as React from 'react';
+import * as React from "react";
 import { render } from "react-dom";
 
-export interface IProps extends React.Props<any> {
-    
-}
-
-export interface IState {
-    
-}
-
-export default class App extends React.Component<IProps, IState> {
-    constructor(props: IProps) {
+export default class App extends React.Component<any, any> {
+    constructor(props) {
         super(props);
         
         this.configureState(props, false);
     }
     
-    public state: IState = {};
-    
     //#region Utility functions
     
-    private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {}
+    configureState(props, useSetState) {
+        let state = {}
         
         if (!useSetState) {
             this.state = state;
@@ -34,19 +24,19 @@ export default class App extends React.Component<IProps, IState> {
     
     //#endregion
     
-    public componentDidMount() {
+    componentDidMount() {
         
     }
     
-    public componentDidUpdate() {
+    componentDidUpdate() {
         
     }
     
-    public componentWillReceiveProps(props: IProps) {
+    componentWillReceiveProps(props) {
         this.configureState(props, true);
     }
     
-    public render() {
+    render() {
         return (
             <div>
                 <h1>{"Hello world!"}</h1>
