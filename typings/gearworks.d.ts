@@ -25,6 +25,9 @@ declare module "gearworks" {
         bodyValidation?: Schema,
         queryValidation?: Schema,
         paramValidation?: Schema,
+        validateShopifyRequest?: boolean;
+        validateShopifyWebhook?: boolean;
+        validateShopifyProxyPage?: boolean;
     }
 
     export type RouterFunction = (config: RouterFunctionConfig) => void;

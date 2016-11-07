@@ -3,6 +3,7 @@ import * as boom from "boom";
 import { Express } from "express";
 import { RouterFunction, User } from "gearworks";
 import { users } from "./../../modules/database";
+import { deleteCacheValue } from "../../modules/cache";
 
 export const BASE_PATH = "/api/v1/webhooks/";
 
@@ -42,7 +43,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             // Delete the user's data from the auth cache to force their next request to query the database.
             try {
-                await deleteCacheValue(Caches.userAuth, user._id);
+                await deleteCacheValue("users", user._id);
             }
             catch (e) {
                 console.error("Failed to delete user data from auth cache after handling app/uninstalled webhook.", e);

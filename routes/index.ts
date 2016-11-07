@@ -1,10 +1,10 @@
 import { Schema, validate } from "joi";
 import { decode, encode } from "jwt-simple";
 import { badData, unauthorized } from "boom";
-import { resolve, promisify } from "bluebird";
 import { seal, unseal, Defaults as IronDefaults } from "iron";
 import { Express, Request, Response, NextFunction } from "express";
-import { AUTH_HEADER_NAME, JWT_SECRET_KEY, IRON_PASSWORD } from "../modules/constants";
+import { resolve, promisify, reduce as bluebirdReduce } from "bluebird";
+import { AUTH_HEADER_NAME, JWT_SECRET_KEY, IRON_PASSWORD, SEALABLE_USER_PROPERTIES } from "../modules/constants";
 import { RouterResponse, RouterFunction, RouterRequest, User, SessionToken, WithSessionTokenFunction } from "gearworks";
 
 // Promisify functions
@@ -26,11 +26,22 @@ export default async function registerAllRoutes(app: Express) {
     // Custom functions for Express request and response objects
     const withSessionToken: WithSessionTokenFunction = async function (this: RouterResponse, user: User, expInDays = 30) {
         // Encrypt any sensitive properties (access tokens, api keys, etc.) with Iron.
-        const sealedToken = await sealAsync(user.shopify_access_token, IRON_PASSWORD, IronDefaults);
+        const sealedProps = await bluebirdReduce(SEALABLE_USER_PROPERTIES, async (result, propName) => {
+            try {
+                result[propName] = await sealAsync(user[propName], IRON_PASSWORD, IronDefaults);
+            } catch (e) {
+                console.error(`Failed to encrypt Iron-sealed property ${propName}. Removing property from resulting session token object.`, e);
+
+                // Prevent sending the unencrypted value to the client.
+                result[propName] = undefined;
+            }
+
+            return result;
+        }, {});
 
         // exp: Part of the jwt spec, specifies an expiration date for the token.
         const exp = Date.now() + (expInDays * 24 * 60 * 60 * 1000);
-        const session: SessionToken = Object.assign({}, user, { exp, shopify_access_token: sealedToken });
+        const session: SessionToken = Object.assign({}, user, { exp }, sealedProps);
 
         return this.json({ token: encode(session, JWT_SECRET_KEY) }) as RouterResponse;
     };
@@ -40,7 +51,7 @@ export default async function registerAllRoutes(app: Express) {
 
     // A custom routing function that handles authentication and body/query/param validation
     const route: RouterFunction = (config) => {
-        app[config.method.toLowerCase()](config.path, function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
+        app[config.method.toLowerCase()](config.path, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
             if (config.requireAuth) {
                 const header = req.header(AUTH_HEADER_NAME);
                 let user: any;
@@ -51,9 +62,18 @@ export default async function registerAllRoutes(app: Express) {
                     return next(unauthorized(`Missing or invalid ${AUTH_HEADER_NAME} header.`));
                 }
 
-                // TODO: Decrypt any sensitive Iron-sealed properties.
+                // Decrypt sensitive Iron-sealed properties
+                const unsealedProps = await bluebirdReduce(SEALABLE_USER_PROPERTIES, async (result, propName) => {
+                    try {
+                        result[propName] = await unsealAsync(user[propName], IRON_PASSWORD, IronDefaults);
+                    } catch (e) {
+                        console.error(`Failed to decrypt Iron-sealed property ${propName}.`, e);
+                    }
 
-                req.user = user;
+                    return result;
+                }, {});
+
+                req.user = Object.assign(user, unsealedProps);
             };
 
             if (config.bodyValidation) {
