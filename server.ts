@@ -13,7 +13,7 @@ const app = express();
 
 async function startServer() {
     app.use((req, res, next) => {
-        res.setHeader("x-powered-by", `Gearworks v${VERSION} (https://github.com/nozzlegear/gearworks)`);
+        res.setHeader("x-powered-by", `Gearworks v${VERSION} https://github.com/nozzlegear/gearworks`);
 
         next();
     });
@@ -40,6 +40,11 @@ async function startServer() {
         // Any request to the /dist path should server a static file from the dist folder.
         app.use("/dist", express.static("dist"));
     }
+
+    // Let express trust the proxy that may be used on certain hosts (e.g. Azure and other cloud hosts). 
+    // Enabling this will replace the `request.protocol` with the protocol that was requested by the end user, 
+    // rather than the internal protocol used by the proxy.
+    app.enable("trust proxy");
 
     // Set up request body parsers
     app.use(parseJson());

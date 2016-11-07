@@ -5,10 +5,11 @@ declare module "gearworks" {
     //#region Routing
 
     export interface RouterRequest extends Request {
-        user?: Object;
+        user?: User;
         validatedBody?: any;
         validatedQuery?: any;
         validatedParams?: any;
+        domainWithProtocol: string;
     }
 
     export type WithSessionTokenFunction = (user: User, expInDays?: number) => Promise<RouterResponse>;

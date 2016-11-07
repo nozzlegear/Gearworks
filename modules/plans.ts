@@ -38,19 +38,18 @@ export default Plans;
  * No plan in this list will appear on the pricing page.
  */
 export const RetiredPlans: Plan[] = [
-    
+
 ]
 
 /**
  * Finds a plan with the given id, whether it's a current or retired plan.
  */
-export function findPlan(id: string) 
-{
+export function findPlan(id: string) {
     const plan = Plans.filter(p => p.id === id) || RetiredPlans.filter(p => p.id === id);
-    
+
     if (!plan) {
         throw new Error(`Unable to find plan with id of ${id}.`);
     }
-    
+
     return plan;
 }

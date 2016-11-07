@@ -15,10 +15,10 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         method: "post",
         requireAuth: false,
         handler: async function (req, res, next) {
-            const query = req.validatedQuery as { shopId: string, shop: string };
+            const query = req.query as { shop_id: string, shop: string };
             const userSearch = await users.find({
                 selector: {
-                    shopify_shop_id: parseInt(query.shopId)
+                    shopify_shop_id: parseInt(query.shop_id)
                 } as User
             });
 
