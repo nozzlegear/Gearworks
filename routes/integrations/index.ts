@@ -79,7 +79,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             if (ISLIVE) {
                 // Create the AppUninstalled webhook immediately after the user accepts installation
                 const webhooks = new Webhooks(model.shop, accessToken);
-                const existingHooks = await webhooks.list({ topic: "app/uninstalled", fields: ["id"], limit: 1 });
+                const existingHooks = await webhooks.list({ topic: "app/uninstalled", fields: "id", limit: 1 });
 
                 // Ensure the webhook doesn't already exist
                 if (existingHooks.length === 0) {

@@ -99,7 +99,7 @@
     "qs": "^6.3.0",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
-    "shopify-prime": "2.0.0-2",
+    "shopify-prime": "2.0.0-4",
     "sitemap": "^1.6.0",
     "string-capitalize": "^1.0.1",
     "vision": "^4.1.0",

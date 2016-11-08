@@ -5,9 +5,9 @@ import Plans from "../../modules/plans";
 import { createTransport } from "nodemailer";
 import { RouterFunction, User } from "gearworks";
 import { users } from "./../../modules/database";
-import { RecurringCharges } from "shopify-prime";
 import { hashSync, compareSync } from "bcryptjs";
 import { seal, unseal } from "../../modules/encryption";
+import { RecurringCharges, Models } from "shopify-prime";
 import { ISLIVE, EMAIL_DOMAIN, APP_NAME, SPARKPOST_API_KEY } from "../../modules/constants";
 
 export const BASE_PATH = "/api/v1/accounts/";
@@ -151,7 +151,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const service = new RecurringCharges(req.user.shopify_domain, req.user.shopify_access_token);
 
             // Get the user's current charge so we can transfer their trial days 
-            const currentCharge = await service.get(req.user.charge_id, { fields: ["trial_ends_on"] });
+            const currentCharge = await service.get(req.user.charge_id, { fields: "trial_ends_on" });
 
             // Figure out the new trial length by checking if current charge's trial_ends_on hasn't happened yet (Today < Tomorrow)
             const trialDays = Math.round((new Date(currentCharge.trial_ends_on).valueOf() - new Date().valueOf()) / 1000 / 60 / 60 / 24);
@@ -183,7 +183,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const model = req.validatedBody as { plan_id: string, charge_id: number };
             const plan = Plans.find(p => p.id === model.plan_id);
             const service = new RecurringCharges(req.user.shopify_domain, req.user.shopify_access_token);
-            let charge: RecurringCharge;
+            let charge: Models.RecurringCharge;
 
             try {
                 charge = await service.get(model.charge_id);
