@@ -1,5 +1,6 @@
 declare module "gearworks" {
     import { Schema } from "joi";
+    import { Enums } from "shopify-prime";
     import { Request, Response, NextFunction } from "express";
 
     //#region Routing
@@ -76,8 +77,6 @@ declare module "gearworks" {
 
     //#region Users
 
-    export type UserPermission = "all";
-
     export interface User {
         /**
          * The user's id.
@@ -127,7 +126,7 @@ declare module "gearworks" {
         /**
          * The user's permissions.
          */
-        permissions?: UserPermission[];
+        permissions?: Enums.AuthScope[];
     }
 
     export interface SessionToken extends User {
