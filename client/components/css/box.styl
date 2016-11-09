@@ -1,0 +1,186 @@
+$textColor: #46515f;
+$blueColor: #6ed5e4;
+$purpleColor: #7461aa;
+
+.box {
+    background: #fff;
+    padding: 2.5rem 5rem;
+    border-radius: 3px 3px 0 0;
+    border: 1px solid #a9a9a9;
+    outline: 0;
+    -moz-background-clip: padding-box;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    margin: 0 0 5rem 0;
+    -webkit-box-shadow: 0 3px 9px rgba(0,0,0,.3);
+    box-shadow: 0 3px 9px rgba(0,0,0,.3);
+}
+
+.box.blue {
+    border-top: 6px solid $blueColor;
+}
+
+.box.purple {
+    border-top: 6px solid $purpleColor;
+}
+
+.box.no-shadow {
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+.box.no-bottom-margin{
+    margin-bottom:0;
+}
+
+.box.pricing {
+    text-align:center;
+    color: $textColor;
+    padding: 4rem 2.5rem 0 2.5rem;
+    margin:0;
+    cursor:pointer;
+}
+
+.box.pricing.selected{
+    border-color:#7461aa;
+}
+
+.box.pricing > h3{
+    font-size:2.3rem;
+    font-weight:600;
+    margin:0;
+    padding:0;
+}
+
+.box.pricing > p{
+    font-size:1.5rem;
+    font-weight:600;
+    margin:1rem 0;
+    padding:0;
+}
+
+.box.pricing > input[type=radio]{
+    margin:2.3rem;
+}
+
+.box .panel {
+    /*#region Override bootstrap defaults*/
+    margin: 0;
+    background-color: #FFF;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    /*#endregion */
+    display: none;
+}
+
+.box .panel.active {
+    display: block;
+}
+
+.box .panel .header {
+    padding: 0;
+    margin:0;
+}
+
+.box .panel .body {
+    padding: 0;
+    margin: 1rem 0 5rem 0;
+    color: #46515f;
+}
+
+.box .panel .body.small-margin{
+    margin:2.5rem 0;
+}
+
+.box .panel .body.no-bottom-margin{
+    margin-bottom:0;
+}
+
+.box .panel .body.no-top-margin{
+    margin-top:0;
+}
+
+.box .panel .footer {
+    padding: 0;
+    margin:0;
+}
+
+.box .panel .footer::before,
+.box .panel .footer::after {
+    display: table;
+    content: " ";
+}
+
+.box .panel .footer::after{
+    clear:both;
+}
+
+.box .panel .footer .btn{
+    padding-top:8px;
+    padding-bottom:8px;
+}
+
+.box .panel .header h1,
+.box .panel .header h2,
+.box .panel .header h3,
+.box .panel .header h4,
+.box .panel .header h5 {
+    color: $textColor;
+    text-align: center;
+    font-size: 2.8rem;
+    font-weight: 400;
+    font-family: Myriad Pro,Lato,Helvetica Neue,Arial;
+    margin: 0;
+    padding: 0;
+}
+
+.box .panel .header p {
+    color: $textColor;
+    font-size: 1.55rem;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    margin-top: 1rem;
+    line-height:2.15rem;
+}
+
+.box .panel .body img {
+    margin-bottom: 3.5rem;
+}
+
+.box .panel .body .form-group label {
+    color: $textColor;
+}
+
+.box .error,
+.box .success {
+    color: red;
+    text-align: center;
+    font-weight: 400;
+    display: block;
+    margin: 3.2rem 0;
+    vertical-align: middle;
+    font-size:1.7rem; 
+}
+
+.box .success {
+    color: green;
+}
+
+.box .panel .footer .dropdown,
+.box .panel .footer a:not(.btn) {
+    padding: 6px 0;
+}
+
+.box .panel .footer .dropdown a {
+    padding: 0;
+}
+
+.box .panel .footer .dropdown .dropdown-menu > li > a {
+    padding: 3px 20px;
+}
+
+.box .tooltip.fade {
+    z-index: 1100;
+}

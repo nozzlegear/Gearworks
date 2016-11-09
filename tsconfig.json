@@ -5,12 +5,7 @@
         "noImplicitAny": false,
         "sourceMap": false,
         "outDir": "bin",
-        "jsx": "react"
-    },
-    "exclude": [
-        "node_modules",
-        "old_modules",
-        "old_routes",
-        "old_views"
-    ]
+        "jsx": "react",
+        "experimentalDecorators": true
+    }
 }

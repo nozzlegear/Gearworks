@@ -28,6 +28,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const user = await users.post({
                 _id: model.username,
                 hashed_password: hashSync(model.password),
+                date_created: new Date().toISOString(),
             });
 
             res = await res.withSessionToken(user);

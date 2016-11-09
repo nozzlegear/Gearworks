@@ -41,5 +41,5 @@ if (!JWT_SECRET_KEY) {
 }
 
 if (!IRON_PASSWORD) {
-console.warn("Warning: IRON_PASSWORD was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
+    console.warn("Warning: IRON_PASSWORD was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
 }

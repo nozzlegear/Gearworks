@@ -89,6 +89,11 @@ declare module "gearworks" {
         _rev?: string;
 
         /**
+         * The date the user's account was created.
+         */
+        date_created?: string;
+
+        /**
          * The user's hashed password.
          */
         hashed_password?: string;
