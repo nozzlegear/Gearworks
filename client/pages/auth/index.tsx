@@ -84,7 +84,7 @@ export default class AuthPage extends Observer<IProps, IState> {
         try {
             const result = await this.api.create({ username, password });
 
-            store.login(result.data);
+            store.login(result.data.token);
         } catch (e) {
             this.setState({ loading: false, error: "Something went wrong and we could not sign you in. Please try again." });
             console.log(e);

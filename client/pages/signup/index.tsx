@@ -73,7 +73,7 @@ export default class SignupPage extends Observer<IProps, IState> {
                 return;
             }
 
-            token = result.data;
+            token = result.data.token;
         }
         catch (e) {
             this.setState({ loading: false, error: "Something went wrong and we could not create your account." });

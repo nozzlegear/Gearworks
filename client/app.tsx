@@ -7,9 +7,9 @@ injectTapEventPlugin();
 
 import * as React from "react";
 import { Provider } from "mobx-react";
+import { APP_NAME } from "../modules/constants";
 import { render as renderComponent } from "react-dom";
 import Paths, { getPathRegex } from "../modules/paths";
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import { Router, Redirect, Link, Route, IndexRoute, browserHistory, RouterContext } from "react-router";
 
 // Stores
@@ -17,30 +17,66 @@ import { Auth as AuthStore } from "./stores";
 
 // Layout components
 import Navbar from "./components/nav";
-import Error from "./pages/error";
+import ErrorPage from "./pages/error";
 
 // Auth components
-import Auth from "./pages/auth";
+import AuthPage from "./pages/auth";
 
-// Portraits
-import Portraits from "./pages/portraits";
+// Signup components
+import SignupPage from "./pages/signup";
+import IntegratePage from "./pages/signup/integrate";
+import FinalizeIntegrationPage from "./pages/signup/finalize";
 
-// Art
-import Art from "./pages/art";
+// Home components
+import HomePage from "./pages/home";
 
-// Aurora
-import Aurora from "./pages/aurora";
-import AuroraHistory from "./pages/aurora/history";
-
-// FTP
-import FtpUpload from "./pages/ftp/upload";
-import FtpManage from "./pages/ftp/manage";
+// Account components
+import AccountPage from "./pages/account";
 
 // Styles
-require("./css/overrides.scss");
-require("./css/theme.scss");
-require("./css/universal.scss");
-require("./css/table.scss");
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+require("../node_modules/purecss/build/pure.css");
+require("../node_modules/typebase.css/typebase.css");
+require("../css/theme.styl");
+
+// Main app component
+export default function Main(props) {
+    return (
+        <MuiThemeProvider>
+            <main id="app"> 
+                {React.cloneElement(props.children, props)}
+                <footer id="footer">
+                    <div>
+                        <p>
+                            {`© ${APP_NAME}, ${new Date().getUTCFullYear()}. All rights reserved.`}
+                        </p>
+                        <p>
+                            {"Powered by "}
+                            <a target="_blank" href="https://github.com/nozzlegear/gearworks">
+                                {"Gearworks"}
+                            </a>
+                            {"."}
+                        </p>
+                    </div>
+                </footer>
+            </main>
+        </MuiThemeProvider>
+    )
+}
+export function MinimalMain(props) {
+    return (
+        <MuiThemeProvider>
+            <main id="app" className="minimal"> 
+                <div id="body">
+                    <div className="page-header">
+                        <Link to={Paths.home.index}>{APP_NAME}</Link>
+                    </div>
+                    {React.cloneElement(props.children as any, props)}
+                </div>
+            </main>
+        </MuiThemeProvider>
+    )
+}
 
 {
     function checkAuthState(args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) {
@@ -59,35 +95,27 @@ require("./css/table.scss");
         callback();
     }
 
-    function WithNav(props) {
-        return (
-            <div>
-                <Navbar />
-                <div id="body">
-                    {React.cloneElement(props.children, props)}
-                </div>
-                <Footer />
-            </div>
-        )
-    }
-
     const routes = (
         <Provider {...{ auth: AuthStore }}>
             <MuiThemeProvider>
                 <main id="app">
                     <Router history={browserHistory}>
-                        <Redirect path={"/"} to={Paths.portraits.index} />
-                        <Route path={Paths.auth.login} component={Auth} onEnter={(args) => {document.title = "Login | KMSignalR"}} />
-                        <Route path={Paths.auth.logout} onEnter={logout} />
-                        <Route path={Paths.ftp.index} component={FtpUpload} onEnter={(args) => {document.title = "Upload File | KMSignalR"}} />
-                        <Route onEnter={checkAuthState} component={WithNav} onChange={(prevState, nextState, replace, callback) => {console.log("AuthState router triggered onChange event."); callback()}} >
-                            <Route path={Paths.portraits.index} component={Portraits} onEnter={(args) => {document.title = "Portrait Orders | KMSignalR"}} />
-                            <Route path={Paths.art.index} component={Art} onEnter={(args) => {document.title = "Art Department Orders | KMSignalR"}} />
-                            <Route path={Paths.aurora.index} component={Aurora} onEnter={(args) => {document.title = "Aurora Orders | KMSignalR"}} />
-                            <Route path={Paths.aurora.history} component={AuroraHistory} onEnter={args => {document.title = "Aurora History | KMSignalR"}} />
-                            <Route path={Paths.ftp.manage} component={FtpManage} onEnter={(args) => {document.title = "Manage FTP Uploads | KMSignalR"}} />
+                        <Route component={Main}>
+                            <Route onEnter={checkAuthState} >
+                                <Route path={Paths.home.index} component={HomePage} onEnter={args => document.title = APP_NAME} />
+                                <Route path={Paths.account.index} component={AccountPage} onEnter={args => document.title = "Your Account"} />
+                            </Route>
                         </Route>
-                        <Route path={"/error/:statusCode"} component={Error} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | KMSignalR`}} />
+                        <Route component={MinimalMain}>
+                            <Route path={Paths.auth.login} component={AuthPage} onEnter={(args) => {document.title = "Login"}} />
+                            <Route path={Paths.signup.index} component={SignupPage} onEnter={args => document.title = "Signup"} />
+                            <Route onEnter={checkAuthState}>
+                                <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store"} />
+                                <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store"} />
+                            </Route>
+                        </Route>
+                        <Route path={Paths.auth.logout} onEnter={logout} />
+                        <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
                         <Redirect path={"*"} to={"/error/404"} />
                     </Router>
                 </main>

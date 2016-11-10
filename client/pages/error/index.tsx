@@ -4,7 +4,7 @@ import Paths from "../../../modules/paths";
 import { Location, History } from "history";
 import { APP_NAME } from "../../../modules/constants";
 
-require("../../css/error.styl");
+require("../../../css/error.styl");
 
 export interface IProps extends React.Props<any> {
     location: Location;

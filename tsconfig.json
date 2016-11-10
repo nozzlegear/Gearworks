@@ -7,5 +7,9 @@
         "outDir": "bin",
         "jsx": "react",
         "experimentalDecorators": true
-    }
+    },
+    "exclude": [
+        "old_views",
+        "node_modules"
+    ]
 }

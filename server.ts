@@ -1,7 +1,6 @@
 import * as path from "path";
 import * as express from "express";
 import { BoomError, wrap } from "boom";
-import { VERSION } from "./modules/constants";
 import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 
 // Server configurations
@@ -13,7 +12,7 @@ const app = express();
 
 async function startServer() {
     app.use((req, res, next) => {
-        res.setHeader("x-powered-by", `Gearworks v${VERSION} https://github.com/nozzlegear/gearworks`);
+        res.setHeader("x-powered-by", `Gearworks https://github.com/nozzlegear/gearworks`);
 
         next();
     });

@@ -2,11 +2,8 @@ import { resolve } from "path";
 import { Enums } from "shopify-prime";
 
 const env = process && process.env || {};
-const pkg = require(resolve(__dirname, "../../", "package.json"));
 
 export const COUCHDB_URL = env.GEARWORKS_COUCHDB_URL || env.COUCHDB_URL || "http://localhost:5984";
-
-export const VERSION = pkg.version;
 
 export const ISLIVE = env.NODE_ENV === "production";
 

@@ -1,21 +1,24 @@
-import getApiError from "./errors";
-import {SessionToken} from "rustwrench";
-import {resolve, reject} from "bluebird";
-import {AuthState} from "../reducers/auth";
-import {stringify as queryString} from "qs";
+import { resolve, reject } from "bluebird";
+import { stringify as queryString } from "qs";
+
+export interface ApiError {
+    details?: any;
+    message?: string;
+    unauthorized?: boolean;
+}
 
 export interface ApiResult<T> {
     data: T,
     body: string,
-    error?: {
-        message: string,
-        unauthorized: boolean,
-        details: any,   
-    },
+    error?: ApiError,
     ok: boolean,
     url: string,
     status: number,
     statusText: string,
+}
+
+export interface SessionTokenResponse {
+    token: string;
 }
 
 export default class BaseService {
@@ -70,7 +73,26 @@ export default class BaseService {
         };
 
         if (!result.ok) {
-            output.error = getApiError(result, output.body, "Something went wrong and your request could not be completed. Please try again.");
+            console.error(new Date().toString(), result);
+
+            const defaultMessage = "Something went wrong and your request could not be completed.";
+            const error: ApiError = {
+                unauthorized: result.status === 401,
+            }
+
+            try {
+                const response: { message: string, details: { key: string, errors: string[] }[] } = JSON.parse(output.body || "{}");
+
+                error.message = Array.isArray(response.details) ? response.details.map(e => e.errors.join(", ")).join(", ") : response.message;
+                error.details = response.details;
+            } catch (e) {
+                console.error("Could not parse response's error JSON.", e, error, output.body);
+
+                error.message = defaultMessage;
+            }
+
+            error.message = error.message || defaultMessage;
+            output.error = error;
         }
 
         return output;
@@ -82,7 +104,7 @@ export class Users extends BaseService {
         super("/api/v1/users", authToken);
     }
 
-    public create = (data: {username: string, password: string}) => this.sendRequest<AuthState>("", "POST", data);
+    public create = (data: { username: string, password: string }) => this.sendRequest<SessionTokenResponse>("", "POST", data);
 }
 
 export class Shopify extends BaseService {
@@ -90,13 +112,13 @@ export class Shopify extends BaseService {
         super("/api/v1/shopify", authToken);
     }
 
-    public verifyUrl = (data: {url: string}) => this.sendRequest<{isValid: boolean}>("verify_url", "POST", data);
+    public verifyUrl = (data: { url: string }) => this.sendRequest<{ isValid: boolean }>("verify_url", "POST", data);
 
-    public createAuthorizationUrl = (data: {url: string; redirectUrl: string}) => this.sendRequest<{url: string}>("create_authorization_url", "POST", data);
+    public createAuthorizationUrl = (data: { url: string; redirectUrl: string }) => this.sendRequest<{ url: string }>("create_authorization_url", "POST", data);
 
-    public authorize = (data: {code: string, shopUrl: string, fullQueryString: string}) => this.sendRequest<AuthState>("authorize", "POST", data);
+    public authorize = (data: { code: string, shopUrl: string, fullQueryString: string }) => this.sendRequest<SessionTokenResponse>("authorize", "POST", data);
 
-    public listOrders = (data: {limit?: number; page?: number;} = {}) => this.sendRequest<any[]>(`orders`, "GET", data);
+    public listOrders = (data: { limit?: number; page?: number; } = {}) => this.sendRequest<any[]>(`orders`, "GET", data);
 
     public getOrder = (id: number | string) => this.sendRequest<any>(`orders/${id}`, "GET");
 
@@ -109,10 +131,10 @@ export class Shopify extends BaseService {
     public deleteOrder = (id: string | number) => this.sendRequest<void>(`orders/${id}`, "DELETE");
 }
 
-export class Sessions extends BaseService{
+export class Sessions extends BaseService {
     constructor(authToken?: string) {
         super("/api/v1/sessions", authToken);
     }
 
-    public create = (data: {username: string, password: string}) => this.sendRequest<AuthState>("", "POST", data);
+    public create = (data: { username: string, password: string }) => this.sendRequest<SessionTokenResponse>("", "POST", data);
 }

@@ -60,6 +60,10 @@ const config = {
                 loaders: ["style", "css", "postcss-loader"]
             },
             {
+                test: /\.styl$/i,
+                loaders: ["style", "css", "stylus"]
+            },
+            {
                 test: /\.json$/i,
                 loaders: ["json"],
             },

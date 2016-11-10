@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { observer } from "mobx-react";
 import store from "../../stores/auth";
-import Nav from "../../components/nav";
 import { Models } from "shopify-prime";
 import {Shopify} from "../../../modules/api";
 import Observer from "../../components/observer_component";
@@ -226,7 +225,7 @@ export default class HomePage extends Observer<IProps, IState> {
 
         if (this.state.selectedRows && this.state.selectedRows.length > 0) {
             const order: Models.Order = this.props.dashboard.orders[this.state.selectedRows[0]];
-            const theme = this.props.theme.rawTheme.palette;
+            const theme = (this.props as any).theme.rawTheme.palette;
             const toolbarStyle = {
                 backgroundColor: theme.primary2Color,
                 borderColor: theme.borderColor,
@@ -265,7 +264,6 @@ export default class HomePage extends Observer<IProps, IState> {
 
         return (
             <div>
-                <Nav {...this.props} rightIconClass="fa fa-plus" onRightIconTouchTap={e => this.setState({dialogOpen: true})} />
                 <section id="home" className="content">
                     <h2 className="content-title">{`Latest Orders for ${this.props.auth.session.shopify_shop_name}`}</h2>
                     {body}

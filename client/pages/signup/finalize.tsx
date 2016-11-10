@@ -56,7 +56,7 @@ export default class FinalizePage extends Observer<IProps, IState> {
                 return;
             }
 
-            this.props.auth.login(req.data);
+            this.props.auth.login(req.data.token);
             this.context.router.push(Paths.home.index);
         } catch (e) {
             console.error(e);

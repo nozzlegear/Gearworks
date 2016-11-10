@@ -2,7 +2,6 @@ import Dialog from "./dialog"
 import * as React from 'react';
 import * as gravatar from "gravatar";
 import { observer } from "mobx-react";
-import Nav from "../../components/nav";
 import Observer from "../../components/observer_component";
 import {
     Card,
@@ -67,7 +66,6 @@ export default class AccountPage extends Observer<IProps, IState> {
 
         return (
             <div>
-                <Nav {...this.props} />
                 <section id="account" className="content">
                     <h2 className="content-title">{"Your Account"}</h2>
                     <div className="pure-g">

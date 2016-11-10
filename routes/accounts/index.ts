@@ -105,10 +105,10 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         path: BASE_PATH + "password",
         requireAuth: true,
         bodyValidation: joi.object({
-            old_password: joi.string().when("reset_token", { is: undefined, then: joi.string().required() }),
+            old_password: joi.string().required(),
             new_password: joi.string().min(6).max(100).required(),
-            reset_token: joi.string().required().when("old_password", { is: undefined, then: joi.string().required() })
-        }),
+            reset_token: joi.string().required()
+        }).without("old_password", "reset_token"),
         handler: async function (req, res, next) {
             const payload = req.validatedBody as { old_password: string, new_password: string };
             const user = await users.get(req.user._id);
