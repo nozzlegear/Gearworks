@@ -26,13 +26,15 @@ export default async function registerAllRoutes(app: Express) {
     const withSessionToken: WithSessionTokenFunction = async function (this: RouterResponse, user: User, expInDays = 30) {
         // Encrypt any sensitive properties (access tokens, api keys, etc.) with Iron.
         const sealedProps = await Bluebird.reduce(SEALABLE_USER_PROPERTIES, async (result, propName) => {
-            try {
-                result[propName] = await seal(user[propName]);
-            } catch (e) {
-                console.error(`Failed to encrypt Iron-sealed property ${propName}. Removing property from resulting session token object.`, e);
+            if (!!user[propName]) {
+                try {
+                    result[propName] = await seal(user[propName]);
+                } catch (e) {
+                    console.error(`Failed to encrypt Iron-sealed property ${propName}. Removing property from resulting session token object.`, e);
 
-                // Prevent sending the unencrypted value to the client.
-                result[propName] = undefined;
+                    // Prevent sending the unencrypted value to the client.
+                    result[propName] = undefined;
+                }
             }
 
             return result;
@@ -52,7 +54,7 @@ export default async function registerAllRoutes(app: Express) {
     const route: RouterFunction = (config) => {
         app[config.method.toLowerCase()](config.path, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
             req.domainWithProtocol = `${req.protocol}://${req.hostname}`;
-            
+
             if (config.requireAuth) {
                 const header = req.header(AUTH_HEADER_NAME);
                 let user: any;
@@ -65,10 +67,12 @@ export default async function registerAllRoutes(app: Express) {
 
                 // Decrypt sensitive Iron-sealed properties
                 const unsealedProps = await Bluebird.reduce(SEALABLE_USER_PROPERTIES, async (result, propName) => {
-                    try {
-                        result[propName] = await unseal(user[propName]);
-                    } catch (e) {
-                        console.error(`Failed to decrypt Iron-sealed property ${propName}.`, e);
+                    if (!!user[propName]) {
+                        try {
+                            result[propName] = await unseal(user[propName]);
+                        } catch (e) {
+                            console.error(`Failed to decrypt Iron-sealed property ${propName}.`, e);
+                        }
                     }
 
                     return result;

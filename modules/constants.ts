@@ -2,6 +2,11 @@ import { resolve } from "path";
 import { Enums } from "shopify-prime";
 
 const env = process && process.env || {};
+let isBrowser = true;
+
+if (typeof process === 'object' && process + '' === '[object process]') {
+    isBrowser = false;
+}
 
 export const COUCHDB_URL = env.GEARWORKS_COUCHDB_URL || env.COUCHDB_URL || "http://localhost:5984";
 
@@ -33,10 +38,24 @@ export const DEFAULT_SCOPES: Enums.AuthScope[] = ["read_orders", "write_orders"]
  */
 export const SEALABLE_USER_PROPERTIES = ["shopify_access_token"];
 
-if (!JWT_SECRET_KEY) {
-    console.warn("Warning: JWT_SECRET_KEY was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
-}
+if (!isBrowser) {
+    if (!JWT_SECRET_KEY) {
+        console.warn("Warning: JWT_SECRET_KEY was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
+    }
 
-if (!IRON_PASSWORD) {
-    console.warn("Warning: IRON_PASSWORD was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
+    if (!IRON_PASSWORD) {
+        console.warn("Warning: IRON_PASSWORD was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
+    }
+
+    if (!SHOPIFY_API_KEY) {
+        console.warn("Warning: SHOPIFY_API_KEY was not found in environment variables. Shopify integration will be impossible.");
+    }
+
+    if (!SHOPIFY_SECRET_KEY) {
+        console.warn("Warning: SHOPIFY_SECRET_KEY was not found in environment variables. Shopify integration will be impossible.");
+    }
+
+    if (!SPARKPOST_API_KEY) {
+        console.warn("Warning: SPARKPOST_API_KEY was not found in environment variables. Password reset will be impossible.");
+    }
 }

@@ -13,7 +13,6 @@ export interface IProps {
 }
 
 export interface IState {
-    shopUrl?: string;
     loading?: boolean;
     error?: string;
 }
@@ -27,12 +26,12 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
 
     public state: IState = {};
 
+    private urlControl: TextField;
+
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {
-            shopUrl: "",
-        }
+        let state: IState = { };
 
         if (!useSetState) {
             this.state = state;
@@ -48,7 +47,8 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
     private async createAccount(e: React.MouseEvent<any> | React.FormEvent<any>) {
         e.preventDefault();
 
-        const {shopUrl, loading} = this.state;
+        const {loading} = this.state;
+        const shopUrl = this.urlControl.getValue();
         const api = new Shopify(store.token);
 
         if (loading) {
@@ -57,42 +57,30 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
 
         this.setState({ loading: true, error: undefined });
 
+        let result: ApiResult<{ url: string }>;
+        let error: string;
+
         // Verify the shop url first
         try {
-            const result = await api.verifyUrl({
-                url: this.state.shopUrl
+            result = await api.createAuthorizationUrl({
+                shop_domain: shopUrl,
+                redirect_url: `${window.location.protocol}//${window.location.host}${Paths.signup.finalizeIntegration}`,
             });
-
-            if (!result.ok || !result.data.isValid) {
-                this.setState({ loading: false, error: result.ok ? "The URL you entered is not a valid Shopify store URL. Please double-check it and try again." : result.error.message });
-
-                return;
-            }
         } catch (e) {
-            this.setState({ loading: false, error: "Something went wrong and we could not verify your Shopify URL." });
+            error = "Something went wrong and we could not verify your Shopify URL.";
+        }
+
+
+        if (error || !result.ok) {
+            error = error || result.error.message || "Something went wrong and your request could not be completed.";
+             
+            this.setState({ loading: false, error });
 
             return;
         }
 
-        // Create an authorization url
-        try {
-            const result = await api.createAuthorizationUrl({
-                url: this.state.shopUrl,
-                redirectUrl: `${window.location.protocol}//${window.location.host}${Paths.signup.finalizeIntegration}`,
-            });
-
-            if (!result.ok) {
-                this.setState({ loading: false, error: result.error.message });
-
-                return;
-            }
-
-            window.location.href = result.data.url;
-        } catch (e) {
-            this.setState({ loading: false, error: "Something went wrong and we could not create an integration link for your Shopify store. Please try again." });
-
-            return;
-        }
+        // Send the user to the integration URL
+        window.location.href = result.data.url;
     }
 
     public componentDidMount() {
@@ -108,7 +96,7 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
     }
 
     public render() {
-        const {shopUrl, loading, error} = this.state;
+        const {loading, error} = this.state;
         const actions = (
             <RaisedButton
                 fullWidth={true}
@@ -126,10 +114,9 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
                                 <TextField
                                     fullWidth={true}
                                     floatingLabelText="Your Shopify store URL"
-                                    value={shopUrl}
                                     type="text"
                                     hintText="https://example.myshopify.com"
-                                    onChange={this.updateStateFromEvent((s, v) => s.shopUrl = v)} />
+                                    ref={c => this.urlControl = c} />
                             </div>
                         </Box>
                     </div>

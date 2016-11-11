@@ -31,7 +31,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 date_created: new Date().toISOString(),
             });
 
-            res = await res.withSessionToken(user);
+            await res.withSessionToken(user);
 
             return next();
         }
@@ -111,7 +111,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         }).without("old_password", "reset_token"),
         handler: async function (req, res, next) {
             const payload = req.validatedBody as { old_password: string, new_password: string };
-            const user = await users.get(req.user._id);
+            let user = await users.get(req.user._id);
 
             // Ensure the user's current password is correct
             if (!compareSync(payload.old_password, user.hashed_password)) {
@@ -122,7 +122,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.hashed_password = hashSync(payload.new_password);
 
             try {
-                const update = await users.put(user);
+                user = await users.put(user);
             } catch (e) {
                 console.error("Failed to update user's password.", e);
 
@@ -208,7 +208,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.charge_id = charge.id;
 
             try {
-                user = await users.put(user);
+               user = await users.put(user);
             } catch (e) {
                 console.error(`Activated new subscription plan but failed to update user ${req.user._id} plan id.`, e);
 

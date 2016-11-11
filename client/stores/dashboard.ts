@@ -14,7 +14,7 @@ export class DashboardStore {
     @observable loaded = false;
 
     @action loadOrders(orders: Models.Order[]) {
-        this.orders = orders;
+        this.orders.push(...orders);
         this.loaded = true;
     }
 

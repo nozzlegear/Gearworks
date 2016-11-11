@@ -4,8 +4,6 @@ import Paths from "../../../modules/paths";
 import { Location, History } from "history";
 import { APP_NAME } from "../../../modules/constants";
 
-require("../../../css/error.styl");
-
 export interface IProps extends React.Props<any> {
     location: Location;
     params: {
@@ -19,11 +17,6 @@ export default function Error(props: IProps) {
 
     return (
         <section id="error">
-            <h1 className="logo">
-                <Link to={Paths.home.index}>
-                    {APP_NAME}
-                </Link>
-            </h1>
             <div className="error">
                 <h2>
                     {"Oops!"}

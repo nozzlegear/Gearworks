@@ -44,11 +44,11 @@ export default class FinalizePage extends Observer<IProps, IState> {
     //#endregion
 
     public async componentDidMount() {
-        const qs = parse(window.location.search.replace(/^\?/i, "")) as { code: string, shop: string };
+        const qs = parse(window.location.search.replace(/^\?/i, "")) as { code: string, shop: string, hmac: string, state?: string };
         const api = new Shopify(this.props.auth.token);
 
         try {
-            const req = await api.authorize({ code: qs.code, shopUrl: qs.shop, fullQueryString: window.location.search });
+            const req = await api.authorize(qs);
 
             if (!req.ok) {
                 this.setState({ error: req.error.message });

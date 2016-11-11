@@ -16,12 +16,7 @@ export interface IProps extends React.Props<any> {
 
 export interface IState {
     error?: string;
-
     loading?: boolean;
-
-    username?: string;
-
-    password?: string;
 }
 
 export default class AuthPage extends Observer<IProps, IState> {
@@ -37,13 +32,14 @@ export default class AuthPage extends Observer<IProps, IState> {
 
     private api = new Sessions();
 
+    private emailBox: TextField;
+
+    private passwordBox: TextField;
+
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {
-            username: "",
-            password: "",
-        };
+        let state: IState = {};
 
         if (!useSetState) {
             this.state = state;
@@ -65,7 +61,8 @@ export default class AuthPage extends Observer<IProps, IState> {
             return;
         }
 
-        const {username, password} = this.state;
+        const username = this.emailBox.getValue();
+        const password = this.passwordBox.getValue();
 
         if (!username) {
             this.mergeState({ error: "You must enter your username." });
@@ -114,7 +111,7 @@ export default class AuthPage extends Observer<IProps, IState> {
     }
 
     public render() {
-        const {error, loading, username, password} = this.state;
+        const {error, loading} = this.state;
         const footer = <RaisedButton onTouchTap={e => this.handleSignIn(e)} primary={true} fullWidth={true} label={loading ? "Signing in" : "Sign in"} icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null} />;
 
         return (
@@ -127,16 +124,14 @@ export default class AuthPage extends Observer<IProps, IState> {
                                     fullWidth={true}
                                     floatingLabelText="Email"
                                     type="email"
-                                    value={username}
-                                    onChange={this.updateStateFromEvent((s, v) => s.username = v)} />
+                                    ref={box => this.emailBox = box} />
                             </div>
                             <div className="form-group">
                                 <TextField
                                     fullWidth={true}
                                     floatingLabelText="Password"
                                     type="password"
-                                    value={password}
-                                    onChange={this.updateStateFromEvent((s, v) => s.password = v)} />
+                                    ref={box => this.passwordBox = box} />
                             </div>
                         </Box>
                         <div className="info-line">

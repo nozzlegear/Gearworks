@@ -3,7 +3,7 @@ import * as boom from "boom";
 import { Express } from "express";
 import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
-import { Auth, Shops, Webhooks } from "shopify-prime";
+import { Auth, Shops, Webhooks, Orders } from "shopify-prime";
 import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE } from "../../modules/constants";
 
 export const BASE_PATH = "/api/v1/integrations/";
@@ -16,12 +16,21 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         path: BASE_PATH + "shopify/url",
         requireAuth: true,
         queryValidation: joi.object({
-            shop_domain: joi.string().required()
-        }),
+            shop_domain: joi.string().required(),
+            redirect_url: joi.string().required(),
+        }).unknown(true),
         handler: async function (req, res, next) {
-            const url = await Auth.buildAuthorizationUrl(DEFAULT_SCOPES, req.validatedQuery.shop_domain, SHOPIFY_API_KEY);
+            const url = req.validatedQuery.shop_domain;
+            const redirect = req.validatedQuery.redirect_url;
+            const isValidUrl = await Auth.isValidShopifyDomain(req.validatedQuery.shop_domain);
 
-            res.json({ url });
+            if (!isValidUrl) {
+                return next(boom.notAcceptable(`${url} is not a valid Shopify shop domain.`));
+            }
+
+            const authUrl = await Auth.buildAuthorizationUrl(DEFAULT_SCOPES, req.validatedQuery.shop_domain, SHOPIFY_API_KEY, redirect);
+
+            res.json({ url: authUrl });
 
             return next();
         }
@@ -29,14 +38,14 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
     route({
         method: "post",
-        path: BASE_PATH + "shopify",
+        path: BASE_PATH + "shopify/authorize",
         requireAuth: true,
         bodyValidation: joi.object({
             code: joi.string().required(),
             shop: joi.string().required(),
             hmac: joi.string().required(),
             state: joi.string()
-        }),
+        }).unknown(true),
         handler: async function (req, res, next) {
             const model = req.validatedBody as { code: string, shop: string, hmac: string, state?: string };
             let user: User;
@@ -89,6 +98,25 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                     })
                 }
             }
+
+            return next();
+        }
+    })
+
+    route({
+        method: "get",
+        path: BASE_PATH + "shopify/orders", 
+        requireAuth: true,
+        queryValidation: joi.object({
+            limit: joi.number().default(50),
+            page: joi.number().greater(0).default(1),
+            status: joi.string().only("any").default("any"),
+        }).unknown(true),
+        handler: async function (req, res, next) {
+            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
+            const orders = await service.list(req.validatedQuery);
+
+            res.json(orders);
 
             return next();
         }

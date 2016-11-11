@@ -56,5 +56,5 @@ declare module "iron" {
     /**
      * Iron option defaults.
      */
-    export const Defaults: Options;
+    export const defaults: Options;
 }

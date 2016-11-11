@@ -2,7 +2,7 @@ import { wrap } from "boom";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
 import { COUCHDB_URL } from "../modules/constants";
-import { User, PasswordResetUser, Database } from "gearworks";
+import { User, PasswordResetUser, Database, CouchResponse, CouchDoc } from "gearworks";
 
 const UsersDatabaseInfo = {
     name: "gearworks_users",
@@ -63,7 +63,7 @@ export default async function configureDatabases() {
     });
 }
 
-function prepDatabase<T>(name: string) {
+function prepDatabase<T extends CouchDoc>(name: string) {
     const databaseUrl = `${COUCHDB_URL}/${name}/`;
     async function checkErrorAndGetBody(result: Response, action: "finding" | "listing" | "counting" | "getting" | "posting" | "putting" | "deleting") {
         const body = await result.json();
@@ -135,9 +135,10 @@ function prepDatabase<T>(name: string) {
                 body: JSON.stringify(data)
             });
 
-            const body = await checkErrorAndGetBody(result, "posting");
+            const body: CouchResponse = await checkErrorAndGetBody(result, "posting");
 
-            return body;
+            // Post and PUT requests do not return the object itself. Update the input object with new id and rev values.
+            return Object.assign({}, data, {_id: body.id, _rev: body.rev}); 
         },
         put: async function (data, rev?) {
             const result = await fetch(databaseUrl + data._id + `?${qs({rev})}`, {
@@ -148,9 +149,10 @@ function prepDatabase<T>(name: string) {
                 body: JSON.stringify(data)
             });
 
-            const body = await checkErrorAndGetBody(result, "putting");
+            const body: CouchResponse = await checkErrorAndGetBody(result, "putting");
 
-            return body;
+            // Post and PUT requests do not return the object itself. Update the input object with new id and rev values.
+            return Object.assign({}, data, {_id: body.id, _rev: body.rev}); 
         },
         delete: async function (id, rev) {
             const result = await fetch(databaseUrl + id + `?${qs({rev})}`, {

@@ -64,9 +64,9 @@ export default class HomePage extends Observer<IProps, IState> {
         this.setState(state);
     }
 
-    private getLineDescription(o: any) {
-        const first: {name: string; quantity: number} = o.lineItems[0];
-        const suffix = o.lineItems.length > 1 ? ` and ${o.lineItems.length - 1} other items` : "";
+    private getLineDescription(o: Models.Order) {
+        const first = o.line_items[0];
+        const suffix = o.line_items.length > 1 ? ` and ${o.line_items.length - 1} other items` : "";
 
         return `${first.quantity} x ${first.name}${suffix}.`;
     }
@@ -156,7 +156,7 @@ export default class HomePage extends Observer<IProps, IState> {
     
     public async componentDidMount() {
         const api = new Shopify(this.props.auth.token);
-        let orders: any[] = [];
+        let orders: Models.Order[] = [];
         let error: string = undefined;
 
         try {
@@ -176,7 +176,9 @@ export default class HomePage extends Observer<IProps, IState> {
         }
 
         this.setState({error}, () => {
-            this.props.dashboard.loadOrders(orders);
+            if (!error) {
+                this.props.dashboard.loadOrders(orders);
+            }
         });
     }
     

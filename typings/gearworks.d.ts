@@ -38,12 +38,24 @@ declare module "gearworks" {
 
     //#region Database
 
-    export interface Database<T> {
+    export interface CouchDoc {
+        /**
+         * The object's database id.
+         */
+        _id?: string;
+        
+        /**
+         * The object's database revision.
+         */
+        _rev?: string;
+    }
+
+    export interface Database<T extends CouchDoc> {
         list: (options?: ListOptions) => Promise<{ offset: number, total_rows: number, rows: T[] }>;
         count: () => Promise<number>;
         get: (id: string, rev?: string) => Promise<T>;
         post: (data: T) => Promise<T>;
-        put: (data: T & {_id?: string }, rev?: string) => Promise<T>;
+        put: (data: T, rev?: string) => Promise<CouchResponse>;
         delete: (id: string, rev: string) => Promise<void>;
         find: (selector: FindSelector) => Promise<T[]>;
     }
@@ -77,7 +89,7 @@ declare module "gearworks" {
 
     //#region Users
 
-    export interface User {
+    export interface User extends CouchDoc {
         /**
          * The user's id.
          */

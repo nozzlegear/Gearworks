@@ -13,7 +13,7 @@ import Paths, { getPathRegex } from "../modules/paths";
 import { Router, Redirect, Link, Route, IndexRoute, browserHistory, RouterContext } from "react-router";
 
 // Stores
-import { Auth as AuthStore } from "./stores";
+import { Auth as AuthStore, Dashboard as DashboardStore } from "./stores";
 
 // Layout components
 import Navbar from "./components/nav";
@@ -38,6 +38,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 require("../node_modules/purecss/build/pure.css");
 require("../node_modules/typebase.css/typebase.css");
 require("../css/theme.styl");
+require("../css/error.styl");
 
 // Main app component
 export default function Main(props) {
@@ -76,13 +77,18 @@ export function MinimalMain(props) {
 }
 
 {
-    function checkAuthState(args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) {
-        if (AuthStore.sessionIsInvalid) {
-            console.log("User's auth token is invalid.");
-            replace(Paths.auth.login);
-        }
+    function checkAuthState(requireShopifyIntegration: boolean) {
+        return (args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) => {
+            if (AuthStore.sessionIsInvalid) {
+                console.log("User's auth token is invalid.");
+                replace(Paths.auth.login);
+            } else if (requireShopifyIntegration && !AuthStore.session.shopify_access_token) {
+                console.log("User has not integrated Shopify store.");
+                replace(Paths.signup.integrate);
+            }
 
-        callback();
+            callback();
+        }
     }
 
     function logout(args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) {
@@ -93,11 +99,11 @@ export function MinimalMain(props) {
     }
 
     const routes = (
-        <Provider {...{ auth: AuthStore }}>
+        <Provider {...{ auth: AuthStore, dashboard: DashboardStore }}>
             <MuiThemeProvider>
                 <Router history={browserHistory}>
                     <Route component={Main}>
-                        <Route onEnter={checkAuthState} >
+                        <Route onEnter={checkAuthState(true)} >
                             <Route path={Paths.home.index} component={HomePage} onEnter={args => document.title = APP_NAME} />
                             <Route path={Paths.account.index} component={AccountPage} onEnter={args => document.title = "Your Account"} />
                         </Route>
@@ -105,13 +111,13 @@ export function MinimalMain(props) {
                     <Route component={MinimalMain}>
                         <Route path={Paths.auth.login} component={AuthPage} onEnter={(args) => {document.title = "Login"}} />
                         <Route path={Paths.signup.index} component={SignupPage} onEnter={args => document.title = "Signup"} />
-                        <Route onEnter={checkAuthState}>
+                        <Route onEnter={checkAuthState(false)}>
                             <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store"} />
                             <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store"} />
                         </Route>
+                        <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
                     </Route>
                     <Route path={Paths.auth.logout} onEnter={logout} />
-                    <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
                     <Redirect path={"*"} to={"/error/404"} />
                 </Router>
             </MuiThemeProvider>

@@ -1,5 +1,9 @@
 import { resolve, reject } from "bluebird";
 import { stringify as queryString } from "qs";
+import { Models } from "shopify-prime";
+
+// Interfaces
+import Order = Models.Order;
 
 export interface ApiError {
     details?: any;
@@ -30,7 +34,7 @@ export default class BaseService {
             method: method,
             headers: {
                 "Content-Type": data ? "application/json" : undefined,
-                "x-rustwrench-token": this.authToken || undefined,
+                "x-gearworks-token": this.authToken || undefined,
             },
             body: (method !== "GET" && data) ? JSON.stringify(data) : undefined,
         }));
@@ -101,7 +105,7 @@ export default class BaseService {
 
 export class Users extends BaseService {
     constructor(authToken?: string) {
-        super("/api/v1/users", authToken);
+        super("/api/v1/accounts", authToken);
     }
 
     public create = (data: { username: string, password: string }) => this.sendRequest<SessionTokenResponse>("", "POST", data);
@@ -109,24 +113,22 @@ export class Users extends BaseService {
 
 export class Shopify extends BaseService {
     constructor(authToken?: string) {
-        super("/api/v1/shopify", authToken);
+        super("/api/v1/integrations/shopify", authToken);
     }
 
-    public verifyUrl = (data: { url: string }) => this.sendRequest<{ isValid: boolean }>("verify_url", "POST", data);
+    public createAuthorizationUrl = (data: { shop_domain: string; redirect_url: string }) => this.sendRequest<{ url: string }>("url", "GET", data);
 
-    public createAuthorizationUrl = (data: { url: string; redirectUrl: string }) => this.sendRequest<{ url: string }>("create_authorization_url", "POST", data);
+    public authorize = (data: { code: string, shop: string, hmac: string, state?: string }) => this.sendRequest<SessionTokenResponse>("authorize", "POST", data);
 
-    public authorize = (data: { code: string, shopUrl: string, fullQueryString: string }) => this.sendRequest<SessionTokenResponse>("authorize", "POST", data);
+    public listOrders = (data: { limit?: number; page?: number; } = {}) => this.sendRequest<Order[]>(`orders`, "GET", data);
 
-    public listOrders = (data: { limit?: number; page?: number; } = {}) => this.sendRequest<any[]>(`orders`, "GET", data);
+    public getOrder = (id: number | string) => this.sendRequest<Order>(`orders/${id}`, "GET");
 
-    public getOrder = (id: number | string) => this.sendRequest<any>(`orders/${id}`, "GET");
+    public createOrder = (data: any) => this.sendRequest<Order>("orders", "POST", data);
 
-    public createOrder = (data: any) => this.sendRequest<any>("orders", "POST", data);
+    public openOrder = (id: string | number) => this.sendRequest<Order>(`orders/${id}/open`, "POST");
 
-    public openOrder = (id: string | number) => this.sendRequest<any>(`orders/${id}/open`, "POST");
-
-    public closeOrder = (id: string | number) => this.sendRequest<any>(`orders/${id}/close`, "POST");
+    public closeOrder = (id: string | number) => this.sendRequest<Order>(`orders/${id}/close`, "POST");
 
     public deleteOrder = (id: string | number) => this.sendRequest<void>(`orders/${id}`, "DELETE");
 }

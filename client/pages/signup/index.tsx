@@ -15,8 +15,6 @@ export interface IProps {
 }
 
 export interface IState {
-    username?: string;
-    password?: string;
     loading?: boolean;
     error?: string;
 }
@@ -32,13 +30,14 @@ export default class SignupPage extends Observer<IProps, IState> {
 
     private usersApi = new Users();
 
+    private emailBox: TextField;
+
+    private passwordBox: TextField;
+
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {
-            password: "",
-            username: "",
-        }
+        let state: IState = { }
 
         if (!useSetState) {
             this.state = state;
@@ -63,8 +62,8 @@ export default class SignupPage extends Observer<IProps, IState> {
 
         try {
             const result = await this.usersApi.create({
-                username: this.state.username,
-                password: this.state.password,
+                username: this.emailBox.getValue(),
+                password: this.passwordBox.getValue(),
             });
 
             if (!result.ok) {
@@ -98,7 +97,7 @@ export default class SignupPage extends Observer<IProps, IState> {
     }
 
     public render() {
-        const {username, password, loading, error} = this.state;
+        const {loading, error} = this.state;
         const actions = (
             <RaisedButton
                 fullWidth={true}
@@ -116,18 +115,16 @@ export default class SignupPage extends Observer<IProps, IState> {
                                 <TextField
                                     fullWidth={true}
                                     floatingLabelText="Email"
-                                    value={username}
                                     type="email"
                                     hintText="john.doe@example.com"
-                                    onChange={this.updateStateFromEvent((s, v) => s.username = v)} />
+                                    ref={b => this.emailBox = b} />
                             </div>
                             <div className="form-group">
                                 <TextField
                                     fullWidth={true}
                                     floatingLabelText="Password"
-                                    value={password}
                                     type="password"
-                                    onChange={this.updateStateFromEvent((s, v) => s.password = v)} />
+                                    ref={b => this.passwordBox = b} />
                             </div>
                         </Box>
                         <div className="info-line">
