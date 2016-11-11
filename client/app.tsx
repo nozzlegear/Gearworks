@@ -42,39 +42,36 @@ require("../css/theme.styl");
 // Main app component
 export default function Main(props) {
     return (
-        <MuiThemeProvider>
-            <main id="app"> 
-                {React.cloneElement(props.children, props)}
-                <footer id="footer">
-                    <div>
-                        <p>
-                            {`© ${APP_NAME}, ${new Date().getUTCFullYear()}. All rights reserved.`}
-                        </p>
-                        <p>
-                            {"Powered by "}
-                            <a target="_blank" href="https://github.com/nozzlegear/gearworks">
-                                {"Gearworks"}
-                            </a>
-                            {"."}
-                        </p>
-                    </div>
-                </footer>
-            </main>
-        </MuiThemeProvider>
+        <main id="app"> 
+            <Navbar />
+            {React.cloneElement(props.children, props)}
+            <footer id="footer">
+                <div>
+                    <p>
+                        {`© ${APP_NAME}, ${new Date().getUTCFullYear()}. All rights reserved.`}
+                    </p>
+                    <p>
+                        {"Powered by "}
+                        <a target="_blank" href="https://github.com/nozzlegear/gearworks">
+                            {"Gearworks"}
+                        </a>
+                        {"."}
+                    </p>
+                </div>
+            </footer>
+        </main>
     )
 }
 export function MinimalMain(props) {
     return (
-        <MuiThemeProvider>
-            <main id="app" className="minimal"> 
-                <div id="body">
-                    <div className="page-header">
-                        <Link to={Paths.home.index}>{APP_NAME}</Link>
-                    </div>
-                    {React.cloneElement(props.children as any, props)}
+        <main id="app" className="minimal"> 
+            <div id="body">
+                <div className="page-header">
+                    <Link to={Paths.home.index}>{APP_NAME}</Link>
                 </div>
-            </main>
-        </MuiThemeProvider>
+                {React.cloneElement(props.children as any, props)}
+            </div>
+        </main>
     )
 }
 
@@ -98,27 +95,25 @@ export function MinimalMain(props) {
     const routes = (
         <Provider {...{ auth: AuthStore }}>
             <MuiThemeProvider>
-                <main id="app">
-                    <Router history={browserHistory}>
-                        <Route component={Main}>
-                            <Route onEnter={checkAuthState} >
-                                <Route path={Paths.home.index} component={HomePage} onEnter={args => document.title = APP_NAME} />
-                                <Route path={Paths.account.index} component={AccountPage} onEnter={args => document.title = "Your Account"} />
-                            </Route>
+                <Router history={browserHistory}>
+                    <Route component={Main}>
+                        <Route onEnter={checkAuthState} >
+                            <Route path={Paths.home.index} component={HomePage} onEnter={args => document.title = APP_NAME} />
+                            <Route path={Paths.account.index} component={AccountPage} onEnter={args => document.title = "Your Account"} />
                         </Route>
-                        <Route component={MinimalMain}>
-                            <Route path={Paths.auth.login} component={AuthPage} onEnter={(args) => {document.title = "Login"}} />
-                            <Route path={Paths.signup.index} component={SignupPage} onEnter={args => document.title = "Signup"} />
-                            <Route onEnter={checkAuthState}>
-                                <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store"} />
-                                <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store"} />
-                            </Route>
+                    </Route>
+                    <Route component={MinimalMain}>
+                        <Route path={Paths.auth.login} component={AuthPage} onEnter={(args) => {document.title = "Login"}} />
+                        <Route path={Paths.signup.index} component={SignupPage} onEnter={args => document.title = "Signup"} />
+                        <Route onEnter={checkAuthState}>
+                            <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store"} />
+                            <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store"} />
                         </Route>
-                        <Route path={Paths.auth.logout} onEnter={logout} />
-                        <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
-                        <Redirect path={"*"} to={"/error/404"} />
-                    </Router>
-                </main>
+                    </Route>
+                    <Route path={Paths.auth.logout} onEnter={logout} />
+                    <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
+                    <Redirect path={"*"} to={"/error/404"} />
+                </Router>
             </MuiThemeProvider>
         </Provider>
     )

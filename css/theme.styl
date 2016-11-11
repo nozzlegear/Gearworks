@@ -1,114 +1,129 @@
-@import "variables"
-@import url("https://fonts.googleapis.com/css?family=Open+Sans:300,400,600")
+containerPadding = 1.5rem;
+fontFamily = 'Roboto', sans-serif;
+appBarHeight = 64px;
+footerHeight = 166px;
 
-html {
-    height: 100%;
-}
+html { 
+    /* CSS font-size reset for rem sizing. Makes 1.5rem = 15px, 2rem = 20px, etc. */
+    font-size: 62.5%; 
+} 
 
 body {
-    /*background: #EFEFF2;*/
-    // background: #ecf0f1;
+    padding:0;
+    margin:0;
     font-size: 1.5rem;
-    height: 100%;
-    display:flex;
-    flex-direction: column;
+    color: #444;
+    font-family: fontFamily;
 }
 
-h1, h2, h3, h4, h5, h6
-{
-    font-weight:500;
-    line-height: 1.3;
+h1,h2,h3,h4,h5,h6,p,ul,ol,li,span,a,div {
+    font-family: fontFamily;
 }
 
-.text-center
-{
+container, main {
+    display: block;
+}
+
+container#contenthost{
+    height:100vh;
+    overflow-y: auto;
+}
+
+a {
+    text-decoration: none;
+
+    &:hover, &:focus{
+        text-decoration: none;
+    }
+}
+
+.info-line {
+    text-align: center;
+    color: #FFF;
+    font-size: 1.5rem;
+    font-weight: 500;
+    width: 80%;
+    margin: 0 auto;
+
+    a {
+        color: #fff;
+        text-decoration: underline;
+    }
+}
+
+main#app{
+    height:100vh;
+
+    &.minimal{
+        background: #354b72;
+        color:#fff;
+
+        .page-header {
+            margin:0;
+            border:0;
+
+            > a {
+                display:block;
+                padding: 6.5rem 0;
+                text-align: center;
+                color: #fff;
+                font-size: 31px;
+                font-family: "Lato", "Helvetica Neue", Arial;
+                text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);
+                transition: color 0.25s linear;
+            }
+        }
+    }
+
+    &:not(.minimal) {
+        .content {
+            min-height: "calc(100vh - %s - %s)" % (appBarHeight footerHeight);
+            width: 91.6667%;
+            margin-left: auto;
+            margin-right: auto;
+
+            .content-title {
+                margin: 4rem 0;
+            }
+        }
+    }
+}
+
+.sticked-toolbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+p.error, .error {
+    color: #d50000;
+    margin: 24px 0;
+
+    &.dialog {
+        margin: 24px 0 0 0;
+    }
+}
+
+.text-center {
     text-align: center;
 }
 
-.text-right
-{
+.text-right {
     text-align: right;
 }
 
-.text-left
-{
+.text-left {
     text-align: left;
 }
 
-.navbar-inverse
-{ 
-    .navbar-brand 
-    {
-        color: #fff;
-        
-        &:hover
-        {
-            color: rgba(255, 255, 255, .8);
-        }
-    }
-    
-    .navbar-nav > li > a 
-    {
-        color: #fff;
-        
-        &:hover
-        {
-            color: rgba(255, 255, 255, .8);
-        }
-    }
+.center-children {
+    display:flex;
+    justify-content: center;
 }
 
-.well
-{
-    border: 1px solid #ddd;
-}
-
-.form-footer
-{
-    padding: 2rem 0 0 0;
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: space-between;
+.align-children {
+    display:flex;
     align-items: center;
-}
-
-.error
-{
-    color: #e74c3c;
-    margin: 0;
-}
-
-.success
-{
-    color: #27ae60;
-    margin: 0;
-}
-
-.underline
-{
-    margin-bottom: 1.5rem;
-    border-bottom: 1px dashed #ccc;
-}
-
-main#container //Main page container
-{
-    margin-top: 64px; /* Navbar height */
-    
-    section
-    {
-        &.page-main
-        {
-            padding:0 containerPadding;
-        }
-        
-        h1.page-title
-        {
-            border-bottom: 1px solid #ddd;
-            margin: 0 0 5rem 0;
-            padding: 2rem 0;
-            font-size: 4rem;
-        }
-    }
 }
 
 footer#footer
@@ -118,8 +133,7 @@ footer#footer
     flex-direction: column;
     justify-content: flex-end;
     text-align:center; 
-    
-    
+        
     > div
     {
         border-top: 1px solid #bbb;
@@ -141,10 +155,20 @@ footer#footer
         
         p
         {
-            &:last-child
-            {
-                margin:0;
-            }
+            margin: 2.5rem;
         }
     }
+}
+
+p.underline {
+    padding-bottom:5px;
+    border-bottom: 2px dashed #354b72;
+    margin-bottom:40px;
+
+    &:last-child {
+    }
+
+    > span {
+        float: right;
+    } 
 }
