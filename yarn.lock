@@ -4783,9 +4783,9 @@ sha.js@2.2.6:
   version "2.2.6"
   resolved "https://registry.yarnpkg.com/sha.js/-/sha.js-2.2.6.tgz#17ddeddc5f722fb66501658895461977867315ba"
 
-shopify-prime:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/shopify-prime/-/shopify-prime-2.1.1.tgz#e2123513c188b667104a01c30c08c8e5b7f84213"
+shopify-prime@2.2:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/shopify-prime/-/shopify-prime-2.2.0.tgz#e4834666fe34ad87333dc283a229e48b39f4ade7"
   dependencies:
     crypto-js "^3.1.6"
     jsuri "^1.3.1"
