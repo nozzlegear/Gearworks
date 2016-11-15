@@ -1,6 +1,7 @@
+import { Models } from "shopify-prime";
 import { resolve, reject } from "bluebird";
 import { stringify as queryString } from "qs";
-import { Models } from "shopify-prime";
+import { CreateOrderRequest } from "gearworks/requests";
 
 // Interfaces
 import Order = Models.Order;
@@ -124,7 +125,7 @@ export class Shopify extends BaseService {
 
     public getOrder = (id: number | string) => this.sendRequest<Order>(`orders/${id}`, "GET");
 
-    public createOrder = (data: any) => this.sendRequest<Order>("orders", "POST", data);
+    public createOrder = (data: CreateOrderRequest) => this.sendRequest<Order>("orders", "POST", data);
 
     public openOrder = (id: string | number) => this.sendRequest<Order>(`orders/${id}/open`, "POST");
 

@@ -3,6 +3,7 @@ import * as boom from "boom";
 import { Express } from "express";
 import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
+import { CreateOrderRequest } from "gearworks/requests";
 import { Auth, Shops, Webhooks, Orders } from "shopify-prime";
 import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE } from "../../modules/constants";
 
@@ -105,7 +106,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
     route({
         method: "get",
-        path: BASE_PATH + "shopify/orders", 
+        path: BASE_PATH + "shopify/orders",
         requireAuth: true,
         queryValidation: joi.object({
             limit: joi.number().default(50),
@@ -117,6 +118,51 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const orders = await service.list(req.validatedQuery);
 
             res.json(orders);
+
+            return next();
+        }
+    })
+
+    route({
+        method: "post",
+        path: BASE_PATH + "shopify/orders",
+        requireAuth: true,
+        bodyValidation: joi.object({
+            city: joi.string().required(),
+            email: joi.string().required(),
+            line_item: joi.string().required(),
+            name: joi.string().required(),
+            quantity: joi.number().required(),
+            state: joi.string().required(),
+            street: joi.string().required(),
+            zip: joi.string().required(),
+        }),
+        handler: async function (req, res, next) {
+            const model = req.validatedBody as CreateOrderRequest;
+            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
+            const order = await service.create({
+                billing_address: {
+                    address1: model.street,
+                    city: model.city,
+                    province: model.state,
+                    zip: model.zip,
+                    name: model.name,
+                    country_code: "US",
+                    default: true,
+                },
+                line_items: [
+                    {
+                        name: model.line_item,
+                        title: model.line_item,
+                        quantity: model.quantity,
+                        price: 5,
+                    },
+                ],
+                financial_status: "authorized",
+                email: model.email,
+            });
+
+            res.json(order);
 
             return next();
         }

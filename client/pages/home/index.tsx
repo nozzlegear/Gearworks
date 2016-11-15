@@ -3,6 +3,7 @@ import { observer } from "mobx-react";
 import store from "../../stores/auth";
 import { Models } from "shopify-prime";
 import {Shopify} from "../../../modules/api";
+import AddIcon from "material-ui/svg-icons/content/add";
 import Observer from "../../components/observer_component";
 import DeleteIcon from "material-ui/svg-icons/action/delete";
 import NewOrderDialog from "../../components/new_order_dialog";
@@ -270,6 +271,9 @@ export default class HomePage extends Observer<IProps, IState> {
                     <h2 className="content-title">{`Latest Orders for ${this.props.auth.session.shopify_shop_name}`}</h2>
                     {body}
                 </section>
+                <FloatingActionButton title="New Order" onClick={e => this.setState({dialogOpen: true})} style={{position: "fixed", right: "50px", bottom: "75px"}}>
+                    <AddIcon />
+                </FloatingActionButton>
                 {toolbar}
                 {this.state.error ? <Snackbar open={true} autoHideDuration={10000} message={this.state.error} onRequestClose={e => this.closeErrorSnackbar(e)} /> : null}
                 <NewOrderDialog apiToken={this.props.auth.token} open={this.state.dialogOpen} onRequestClose={() => this.setState({dialogOpen: false})} />

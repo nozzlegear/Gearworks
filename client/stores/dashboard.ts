@@ -18,8 +18,9 @@ export class DashboardStore {
         this.loaded = true;
     }
 
-    @action addOrder(orders: Models.Order) {
-        this.orders.push(orders);
+    @action addOrder(order: Models.Order) {
+        // Dashboard is sorted from newest to oldest. Add the new order to the top of the list.
+        this.orders.unshift(order);
     }
 
     @action removeOrder(id: number) {

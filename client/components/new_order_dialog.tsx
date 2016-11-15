@@ -12,7 +12,6 @@ import {
 } from "material-ui";
 import { Shopify } from "../../modules/api";
 import Dashboard from "../stores/dashboard";
-import { AutoPropComponent } from "auto-prop-component";
 
 export interface IProps extends React.Props<any> {
     open: boolean;
@@ -23,17 +22,9 @@ export interface IProps extends React.Props<any> {
 export interface IState {
     error?: string;
     loading?: boolean;
-    name?: string;
-    email?: string;
-    street?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    lineItem?: string;
-    quantity?: number;
 }
 
-export default class NewOrderDialog extends AutoPropComponent<IProps, IState> {
+export default class NewOrderDialog extends React.Component<IProps, IState> {
     constructor(props: IProps) {
         super(props);
 
@@ -41,6 +32,22 @@ export default class NewOrderDialog extends AutoPropComponent<IProps, IState> {
     }
 
     public state: IState = {};
+
+    private nameControl: TextField;
+
+    private emailControl: TextField;
+
+    private streetControl: TextField;
+
+    private cityControl: TextField;
+
+    private stateControl: TextField;
+
+    private zipControl: TextField;
+
+    private lineItemControl: TextField;
+
+    private quantityControl: TextField;
 
     //#region Utility functions
 
@@ -65,15 +72,23 @@ export default class NewOrderDialog extends AutoPropComponent<IProps, IState> {
             return;
         }
 
-        this.setState({ loading: true });
+        this.setState({ loading: true, error: undefined });
 
-        const newOrder = Object.assign({}, this.state);
         const api = new Shopify(this.props.apiToken);
         let order: any;
         let error: string = undefined;
 
         try {
-            const result = await api.createOrder(newOrder);
+            const result = await api.createOrder({
+                city: this.cityControl.getValue(),
+                email: this.emailControl.getValue(),
+                line_item: this.lineItemControl.getValue(),
+                name: this.nameControl.getValue(),
+                quantity: parseInt(this.quantityControl.getValue()),
+                state: this.stateControl.getValue(),
+                street: this.streetControl.getValue(),
+                zip: this.zipControl.getValue(),
+            });
 
             if (!result.ok) {
                 error = result.error.message;
@@ -140,57 +155,50 @@ export default class NewOrderDialog extends AutoPropComponent<IProps, IState> {
                         <TextField
                             floatingLabelText="Customer Name"
                             hintText={"Jane Doe"}
-                            defaultValue={state.name}
-                            onChange={this.updateStateFromEvent((s, v) => s.name = v)} />
+                            ref={c => this.nameControl = c} />
                     </div>
                     <div className="form-group pure-u-12-24">
                         <TextField
                             floatingLabelText="Customer Email"
                             hintText={"jane.doe@example.com"}
-                            defaultValue={state.email}
-                            onChange={this.updateStateFromEvent((s, v) => s.email = v)} />
+                            ref={c => this.emailControl = c} />
                     </div>
                     <div className="form-group pure-u-12-24">
                         <TextField
                             floatingLabelText="Street Address"
                             hintText={"123 4th Street"}
-                            defaultValue={state.street}
-                            onChange={this.updateStateFromEvent((s, v) => s.street = v)} />
+                            ref={c => this.streetControl = c} />
                     </div>
                     <div className="form-group pure-u-12-24">
                         <TextField
                             floatingLabelText="City"
                             hintText="Smalltown"
-                            defaultValue={state.city}
-                            onChange={this.updateStateFromEvent((s, v) => s.city = v)} />
+                            ref={c => this.cityControl = c} />
                     </div>
                     <div className="form-group pure-u-12-24">
                         <TextField
                             floatingLabelText="State/Province"
                             hintText="Minnesota"
-                            defaultValue={state.state}
-                            onChange={this.updateStateFromEvent((s, v) => s.state = v)} />
+                            ref={c => this.stateControl = c} />
                     </div>
                     <div className="form-group pure-u-12-24">
                         <TextField
                             floatingLabelText="ZIP/Postal Code"
                             hintText="12345"
-                            defaultValue={state.zip}
-                            onChange={this.updateStateFromEvent((s, v) => s.zip = v)} />
+                            ref={c => this.zipControl = c} />
                     </div>
                     <div className="form-group pure-u-12-24">
                         <TextField
                             floatingLabelText="Line Item"
                             hintText="Barrel of Fun"
-                            defaultValue={state.lineItem}
-                            onChange={this.updateStateFromEvent((s, v) => s.lineItem = v)} />
+                            ref={c => this.lineItemControl = c} />
                     </div>
                     <div className="form-group pure-u-12-24">
                         <TextField
                             floatingLabelText="Quantity"
                             hintText="12"
-                            value={state.quantity}
-                            onChange={this.updateStateFromEvent((s, v) => s.quantity = v)} />
+                            type="number"
+                            ref={c => this.quantityControl = c} />
                     </div>
                 </form>
             )
