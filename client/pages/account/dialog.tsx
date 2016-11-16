@@ -1,7 +1,7 @@
 import * as React from 'react';
 import store from "../../stores/auth";
-import { Dialog, FlatButton, RaisedButton, TextField } from "material-ui";
 import { Users, ApiResult, SessionTokenResponse } from "../../../modules/api";
+import { Dialog, FlatButton, RaisedButton, TextField, FontIcon } from "material-ui";
 
 export interface IProps extends React.Props<any> {
     open: boolean;
@@ -118,7 +118,12 @@ export default class AccountDialog extends React.Component<IProps, IState> {
         const { error, saving } = this.state;
         const actions = [
             <FlatButton key="close-dialog-button" label="Close" onTouchTap={e => onRequestClose()} style={{ float: "left" }} />,
-            <RaisedButton key="save-dialog-button" label="Save changes" primary={true} onTouchTap={e => this.saveChanges()} />
+            <RaisedButton 
+                key="save-dialog-button" 
+                label={saving ? "Saving changes" : "Save changes"}
+                icon={saving ? <FontIcon className="fa fa-spinner fa-spin" /> : null} 
+                primary={true} 
+                onTouchTap={e => this.saveChanges()} />
         ];
         let body: JSX.Element;
 

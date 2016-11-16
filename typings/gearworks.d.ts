@@ -59,6 +59,7 @@ declare module "gearworks" {
         delete: (id: string, rev: string) => Promise<void>;
         find: (selector: FindSelector) => Promise<T[]>;
         copy: (data: T, newId: string) => Promise<T>;
+        exists: (id: string) => Promise<boolean>;
     }
 
     export interface CouchResponse {

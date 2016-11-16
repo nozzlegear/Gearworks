@@ -6,7 +6,7 @@ import { User, Database, CouchResponse, CouchDoc } from "gearworks";
 
 const UsersDatabaseInfo = {
     name: "gearworks_users",
-    indexes: ["shopify_access_token", "password_reset_token", "shop_id", "username"]
+    indexes: ["shopify_access_token", "password_reset_token", "shop_id"]
 };
 
 export default async function configureDatabases() {
@@ -173,7 +173,14 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             });
 
             await checkErrorAndGetBody(result, "deleting");
-        }
+        },
+        exists: async function (id) {
+            const result = await fetch(databaseUrl + id, {
+                method: "HEAD",
+            });
+
+            return result.status === 200;
+        },
     };
 
     return output;

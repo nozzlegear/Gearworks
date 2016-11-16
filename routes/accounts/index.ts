@@ -30,8 +30,13 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         }),
         handler: async function (req, res, next) {
             const model = req.validatedBody as { username: string, password: string };
+
+            if (await users.exists(model.username.toLowerCase())) {
+                return next(boom.badData(`A user with that username already exists.`));
+            }
+
             const user = await users.post({
-                _id: model.username,
+                _id: model.username.toLowerCase(),
                 hashed_password: hashSync(model.password),
                 date_created: new Date().toISOString(),
             });
@@ -41,6 +46,51 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             return next();
         }
     });
+
+    route({
+        method: "put",
+        path: BASE_PATH + "username",
+        requireAuth: true,
+        bodyValidation: joi.object({
+            username: joi.string().email().required(),
+            password: joi.string().required(),
+        }),
+        handler: async function (req, res, next) {
+            const model = req.validatedBody as { username: string, password: string };
+
+            if (await users.exists(model.username.toLowerCase())) {
+                return next(boom.badData(`A user with that username already exists.`));
+            }
+
+            let user = await users.get(req.user._id);
+            const {_id, _rev} = user;
+
+            // Ensure the user's password is correct before changing their username
+            if (!compareSync(model.password, user.hashed_password)) {
+                return next(boom.forbidden(`Your password is incorrect.`));
+            }
+
+            try {
+                // CouchDB does not allow modifying a doc's id, so we copy the user to a new document instead.
+                user = await users.copy(user, model.username.toLowerCase());
+            } catch (e) {
+                console.error("Failed to copy user model to new id.", e);
+
+                return next(boom.badData("Failed to save new user id."));
+            }
+
+            try {
+                // Delete the old user document
+                await users.delete(_id, _rev);
+            } catch (e) {
+                console.error(`Failed to delete user doc ${_id} after changing username to ${model.username}`, e);
+            }
+
+            await res.withSessionToken(user);
+
+            return next();
+        }
+    })
 
     route({
         method: "post",
@@ -117,7 +167,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const payload = req.validatedBody as { new_password: string, reset_token: string };
             const token = await unseal(payload.reset_token) as ResetToken;
 
-            if( token.exp < Date.now() ) {
+            if (token.exp < Date.now()) {
                 // Token has expired
                 return next(boom.unauthorized("Token has expired."));
             }
@@ -239,7 +289,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.charge_id = charge.id;
 
             try {
-               user = await users.put(user);
+                user = await users.put(user);
             } catch (e) {
                 console.error(`Activated new subscription plan but failed to update user ${req.user._id} plan id.`, e);
 
