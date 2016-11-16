@@ -110,6 +110,14 @@ export class Users extends BaseService {
     }
 
     public create = (data: { username: string, password: string }) => this.sendRequest<SessionTokenResponse>("", "POST", data);
+
+    public forgotPassword = (data: { username: string }) => this.sendRequest<void>("password/forgot", "POST", data);
+
+    public resetPassword = (data: { reset_token: string; new_password: string; }) => this.sendRequest<void>("password/reset", "POST", data);
+
+    public changePassword = (data: { new_password: string; old_password: string; }) => this.sendRequest<SessionTokenResponse>("password", "PUT", data);
+
+    public changeUsername = (data: {password: string, username: string}) => this.sendRequest<SessionTokenResponse>("username", "PUT", data);
 }
 
 export class Shopify extends BaseService {

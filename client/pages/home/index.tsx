@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { theme } from "../../app";
 import { observer } from "mobx-react";
 import store from "../../stores/auth";
 import { Models } from "shopify-prime";
-import {Shopify} from "../../../modules/api";
+import { Shopify } from "../../../modules/api";
 import AddIcon from "material-ui/svg-icons/content/add";
 import Observer from "../../components/observer_component";
 import DeleteIcon from "material-ui/svg-icons/action/delete";
@@ -22,16 +23,16 @@ import {
     Snackbar,
 } from "material-ui";
 import {
-    Table, 
-    TableBody, 
-    TableHeader, 
-    TableRow as TR, 
-    TableHeaderColumn as TH, 
+    Table,
+    TableBody,
+    TableHeader,
+    TableRow as TR,
+    TableHeaderColumn as TH,
     TableRowColumn as TD
 } from "material-ui/Table";
 
 export interface IProps {
-    
+
 }
 
 export interface IState {
@@ -45,23 +46,23 @@ export interface IState {
 export default class HomePage extends Observer<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
-        
+
         this.configureState(props, false);
     }
-    
+
     public state: IState;
-    
+
     //#region Utility functions
-    
+
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = { }
-        
+        let state: IState = {}
+
         if (!useSetState) {
             this.state = state;
-            
+
             return;
         }
-        
+
         this.setState(state);
     }
 
@@ -83,14 +84,14 @@ export default class HomePage extends Observer<IProps, IState> {
 
         return false;
     }
-    
+
     //#endregion
 
     private closeErrorSnackbar(reason: "timeout" | "clickaway" | string) {
         // Only hide the snackbar if its duration has expired. This prevents clicking anywhere on the app
         // and inadvertantly closing the snackbar.
         if (reason === "timeout") {
-            this.setState({error: undefined});
+            this.setState({ error: undefined });
         }
     }
 
@@ -99,7 +100,7 @@ export default class HomePage extends Observer<IProps, IState> {
             return;
         }
 
-        this.setState({loading: true, selectedRows: []});
+        this.setState({ loading: true, selectedRows: [] });
 
         const api = new Shopify(this.props.auth.token);
         let error: string = undefined;
@@ -119,7 +120,7 @@ export default class HomePage extends Observer<IProps, IState> {
             error = "Something went wrong and your order could not be updated.";
         }
 
-        this.setState({loading: false, error: error}, () => {
+        this.setState({ loading: false, error: error }, () => {
             if (order) {
                 this.props.dashboard.updateOrder(id, order);
             }
@@ -131,7 +132,7 @@ export default class HomePage extends Observer<IProps, IState> {
             return;
         }
 
-        this.setState({loading: true, selectedRows: []});
+        this.setState({ loading: true, selectedRows: [] });
 
         const api = new Shopify(this.props.auth.token);
         let error: string = undefined;
@@ -148,20 +149,20 @@ export default class HomePage extends Observer<IProps, IState> {
             error = "Something went wrong and your order could not be deleted.";
         }
 
-        this.setState({loading: false, error: error}, () => {
+        this.setState({ loading: false, error: error }, () => {
             if (success) {
                 this.props.dashboard.removeOrder(parseInt(id as string));
-            }    
+            }
         })
     }
-    
+
     public async componentDidMount() {
         const api = new Shopify(this.props.auth.token);
         let orders: Models.Order[] = [];
         let error: string = undefined;
 
         try {
-            const result = await api.listOrders({limit: 100, page: 1});
+            const result = await api.listOrders({ limit: 100, page: 1 });
 
             if (!result.ok) {
                 console.error(result.error);
@@ -176,34 +177,34 @@ export default class HomePage extends Observer<IProps, IState> {
             error = "Something went wrong and we could not load your orders.";
         }
 
-        this.setState({error}, () => {
+        this.setState({ error }, () => {
             if (!error) {
                 this.props.dashboard.loadOrders(orders);
             }
         });
     }
-    
+
     public componentDidUpdate() {
-        
+
     }
-    
+
     public componentWillReceiveProps(props: IProps) {
         this.configureState(props, true);
     }
-    
+
     public render() {
         let body: JSX.Element;
         let toolbar: JSX.Element;
 
         if (!this.props.dashboard.loaded) {
-            body = ( 
-                <div className="text-center" style={{paddingTop: "50px", paddingBottom: "50px"}}>
+            body = (
+                <div className="text-center" style={{ paddingTop: "50px", paddingBottom: "50px" }}>
                     <CircularProgress />
                 </div>
             );
         } else {
             body = (
-                <Table onRowSelection={rows => this.setState({selectedRows: rows})} >
+                <Table onRowSelection={rows => this.setState({ selectedRows: rows })} >
                     <TableHeader>
                         <TR>
                             <TH>{"Id"}</TH>
@@ -218,7 +219,7 @@ export default class HomePage extends Observer<IProps, IState> {
                                 <TD>{o.order_number}</TD>
                                 <TD>{`${o.customer.first_name} ${o.customer.last_name}`}</TD>
                                 <TD>{this.getLineDescription(o)}</TD>
-                                <TD>{o.closed_at ? `Closed on ${new Date(o.closed_at).toLocaleDateString("en-US", {month: "short", day: "numeric", year: "numeric"})}` : "Open"}</TD>
+                                <TD>{o.closed_at ? `Closed on ${new Date(o.closed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : "Open"}</TD>
                             </TR>
                         ))}
                     </TableBody>
@@ -228,36 +229,36 @@ export default class HomePage extends Observer<IProps, IState> {
 
         if (this.state.selectedRows && this.state.selectedRows.length > 0) {
             const order: Models.Order = this.props.dashboard.orders[this.state.selectedRows[0]];
-            const theme = (this.props as any).theme.rawTheme.palette;
+            const rawTheme = theme.rawTheme.palette;
             const toolbarStyle = {
-                backgroundColor: theme.primary2Color,
-                borderColor: theme.borderColor,
+                backgroundColor: rawTheme.primary2Color,
+                borderColor: rawTheme.borderColor,
             }
             const groupStyle = {
                 alignItems: "center"
             }
 
             toolbar = (
-                <Toolbar 
-                    className="sticked-toolbar" 
+                <Toolbar
+                    className="sticked-toolbar"
                     style={toolbarStyle}>
                     <ToolbarGroup firstChild={true}>
-                        <DropDownMenu 
+                        <DropDownMenu
                             value={!!order.closed_at ? "closed" : "open"}
                             onChange={(e, i, v) => this.toggleStatus(order.id, order.closed_at ? "open" : "closed")}
-                            labelStyle={{color: theme.alternateTextColor}}>
+                            labelStyle={{ color: rawTheme.alternateTextColor }}>
                             <MenuItem value={"open"} primaryText="Open" />
                             <MenuItem value={"closed"} primaryText="Closed" />
                         </DropDownMenu>
                     </ToolbarGroup>
                     <ToolbarGroup style={groupStyle}>
-                        <IconButton 
-                            iconStyle={{color: theme.alternateTextColor}} 
+                        <IconButton
+                            iconStyle={{ color: rawTheme.alternateTextColor }}
                             title="Unselect All"
-                            onTouchTap={e => this.setState({selectedRows: []})}>
+                            onTouchTap={e => this.setState({ selectedRows: [] })}>
                             <SelectAllIcon />
                         </IconButton>
-                        <IconMenu iconButtonElement={<IconButton iconStyle={{color: theme.alternateTextColor}} title="Delete"><DeleteIcon /></IconButton>}>
+                        <IconMenu iconButtonElement={<IconButton iconStyle={{ color: rawTheme.alternateTextColor }} title="Delete"><DeleteIcon /></IconButton>}>
                             <MenuItem primaryText="Delete Order" onTouchTap={e => this.deleteOrder(order.id)} />
                         </IconMenu>
                     </ToolbarGroup>
@@ -271,12 +272,12 @@ export default class HomePage extends Observer<IProps, IState> {
                     <h2 className="content-title">{`Latest Orders for ${this.props.auth.session.shopify_shop_name}`}</h2>
                     {body}
                 </section>
-                <FloatingActionButton title="New Order" onClick={e => this.setState({dialogOpen: true})} style={{position: "fixed", right: "50px", bottom: "75px"}}>
+                <FloatingActionButton title="New Order" onClick={e => this.setState({ dialogOpen: true })} style={{ position: "fixed", right: "50px", bottom: "75px" }}>
                     <AddIcon />
                 </FloatingActionButton>
                 {toolbar}
                 {this.state.error ? <Snackbar open={true} autoHideDuration={10000} message={this.state.error} onRequestClose={e => this.closeErrorSnackbar(e)} /> : null}
-                <NewOrderDialog apiToken={this.props.auth.token} open={this.state.dialogOpen} onRequestClose={() => this.setState({dialogOpen: false})} />
+                <NewOrderDialog apiToken={this.props.auth.token} open={this.state.dialogOpen} onRequestClose={() => this.setState({ dialogOpen: false })} />
             </div>
         );
     }

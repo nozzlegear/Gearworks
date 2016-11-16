@@ -9,6 +9,7 @@ export const Paths = {
         login: "/auth/login",
         logout: "/auth/logout",
         forgotPassword: "/auth/forgot-password",
+        resetPassword: "/auth/reset-password",
     },
     signup: {
         index: "/signup",
@@ -39,6 +40,10 @@ export function getPathRegex(path: string) {
 
         case Paths.auth.forgotPassword:
             output = /\/auth\/forgot-password\/?$/i;
+        break;
+
+        case Paths.auth.resetPassword:
+            output = /\/auth\/reset-password\/?$/i;
         break;
 
         case Paths.home.index:

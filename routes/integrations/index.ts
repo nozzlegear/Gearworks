@@ -167,4 +167,59 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             return next();
         }
     })
+
+    route({
+        method: "post",
+        path: BASE_PATH + "shopify/orders/:id/open",
+        requireAuth: true,
+        paramValidation: joi.object({
+            id: joi.number().required()
+        }),
+        handler: async function (req, res, next) {
+            const id = req.validatedParams.id as number;
+            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
+            const order = await service.open(id);
+
+            res.json(order);
+
+            return next();
+        }
+    })
+
+    route({
+        method: "post",
+        path: BASE_PATH + "shopify/orders/:id/close",
+        requireAuth: true,
+        paramValidation: joi.object({
+            id: joi.number().required()
+        }),
+        handler: async function (req, res, next) {
+            const id = req.validatedParams.id as number;
+            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
+            const order = await service.close(id);
+
+            res.json(order);
+
+            return next();
+        }
+    })
+
+    route({
+        method: "delete",
+        path: BASE_PATH + "shopify/orders/:id",
+        requireAuth: true,
+        paramValidation: joi.object({
+            id: joi.number().required()
+        }),
+        handler: async function (req, res, next) {
+            const id = req.validatedParams.id as number;
+            const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
+
+            await service.delete(id);
+
+            res.json({});
+
+            return next();
+        }
+    })
 }

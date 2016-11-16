@@ -21,6 +21,8 @@ import ErrorPage from "./pages/error";
 
 // Auth components
 import AuthPage from "./pages/auth";
+import ResetPasswordPage from "./pages/auth/reset_password";
+import ForgotPasswordPage from "./pages/auth/forgot_password";
 
 // Signup components
 import SignupPage from "./pages/signup";
@@ -34,11 +36,15 @@ import HomePage from "./pages/home";
 import AccountPage from "./pages/account";
 
 // Styles
+import baseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import getMuiTheme from 'material-ui/styles/getMuiTheme';
 require("../node_modules/purecss/build/pure.css");
 require("../node_modules/typebase.css/typebase.css");
 require("../css/theme.styl");
 require("../css/error.styl");
+
+export const theme = getMuiTheme(baseTheme);
 
 // Main app component
 export default function Main(props) {
@@ -63,6 +69,7 @@ export default function Main(props) {
         </main>
     )
 }
+
 export function MinimalMain(props) {
     return (
         <main id="app" className="minimal"> 
@@ -100,7 +107,7 @@ export function MinimalMain(props) {
 
     const routes = (
         <Provider {...{ auth: AuthStore, dashboard: DashboardStore }}>
-            <MuiThemeProvider>
+            <MuiThemeProvider muiTheme={theme}>
                 <Router history={browserHistory}>
                     <Route component={Main}>
                         <Route onEnter={checkAuthState(true)} >
@@ -110,6 +117,8 @@ export function MinimalMain(props) {
                     </Route>
                     <Route component={MinimalMain}>
                         <Route path={Paths.auth.login} component={AuthPage} onEnter={(args) => {document.title = "Login"}} />
+                        <Route path={Paths.auth.forgotPassword} component={ForgotPasswordPage} onEnter={args => document.title = "Forgot your password?"} />
+                        <Route path={Paths.auth.resetPassword} component={ResetPasswordPage} onEnter={args => document.title = "Reset your password."} /> 
                         <Route path={Paths.signup.index} component={SignupPage} onEnter={args => document.title = "Signup"} />
                         <Route onEnter={checkAuthState(false)}>
                             <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store"} />

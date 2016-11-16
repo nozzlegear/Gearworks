@@ -53,7 +53,7 @@ export default async function registerAllRoutes(app: Express) {
     // A custom routing function that handles authentication and body/query/param validation
     const route: RouterFunction = (config) => {
         app[config.method.toLowerCase()](config.path, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
-            req.domainWithProtocol = `${req.protocol}://${req.hostname}`;
+            req.domainWithProtocol = `${req.protocol}://${req.hostname}` + (req.hostname === "localhost" ? ":3000" : "");
 
             if (config.requireAuth) {
                 const header = req.header(AUTH_HEADER_NAME);

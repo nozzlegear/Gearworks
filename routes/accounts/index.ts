@@ -14,6 +14,11 @@ export const BASE_PATH = "/api/v1/accounts/";
 
 export const PATH_REGEX = /\/api\/v1\/accounts*?/i;
 
+interface ResetToken {
+    exp: number;
+    username: string;
+}
+
 export default function registerRoutes(app: Express, route: RouterFunction) {
     route({
         method: "post",
@@ -66,9 +71,9 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const token = await seal({
                 exp: Date.now() + ((1000 * 60) * 90), // 90 minutes in milliseconds
                 username: model.username,
-            });
+            } as ResetToken);
 
-            const url = `${req.domainWithProtocol}/auth/reset-password?token=${token}`.replace(/\/+/ig, "/");
+            const url = `${req.domainWithProtocol}/auth/reset-password?token=${encodeURIComponent(token)}`;
             const message = {
                 content: {
                     from: {
@@ -101,21 +106,47 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
     })
 
     route({
+        method: "post",
+        path: BASE_PATH + "password/reset",
+        requireAuth: false,
+        bodyValidation: joi.object({
+            new_password: joi.string().min(6).max(100).required(),
+            reset_token: joi.string().required(),
+        }),
+        handler: async function (req, res, next) {
+            const payload = req.validatedBody as { new_password: string, reset_token: string };
+            const token = await unseal(payload.reset_token) as ResetToken;
+
+            if( token.exp < Date.now() ) {
+                // Token has expired
+                return next(boom.unauthorized("Token has expired."));
+            }
+
+            let user = await users.get(token.username.toLowerCase());
+            user.hashed_password = hashSync(payload.new_password);
+            user = await users.put(user);
+
+            res.json({});
+
+            return next();
+        }
+    })
+
+    route({
         method: "put",
         path: BASE_PATH + "password",
         requireAuth: true,
         bodyValidation: joi.object({
             old_password: joi.string().required(),
-            new_password: joi.string().min(6).max(100).required(),
-            reset_token: joi.string().required()
-        }).without("old_password", "reset_token"),
+            new_password: joi.string().min(6).max(100).required()
+        }),
         handler: async function (req, res, next) {
             const payload = req.validatedBody as { old_password: string, new_password: string };
             let user = await users.get(req.user._id);
 
             // Ensure the user's current password is correct
             if (!compareSync(payload.old_password, user.hashed_password)) {
-                return next(boom.forbidden(`old_password does not match.`));
+                return next(boom.forbidden(`Your current password is incorrect.`));
             }
 
             // Change the user's password

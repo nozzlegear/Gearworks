@@ -55,6 +55,10 @@ if (!isBrowser) {
         console.warn("Warning: SHOPIFY_SECRET_KEY was not found in environment variables. Shopify integration will be impossible.");
     }
 
+    if (!EMAIL_DOMAIN) {
+        console.warn("Warning: EMAIL_DOMAIN was not found in environment varialbes. Password reset will be impossible.")
+    }
+
     if (!SPARKPOST_API_KEY) {
         console.warn("Warning: SPARKPOST_API_KEY was not found in environment variables. Password reset will be impossible.");
     }

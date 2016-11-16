@@ -30,7 +30,9 @@ export class DashboardStore {
     }
 
     @action updateOrder(id: number, order: Models.Order) {
+        const index = this.orders.findIndex(o => o.id === id);
 
+        this.orders.splice(index, 1, order);
     }
 }
 

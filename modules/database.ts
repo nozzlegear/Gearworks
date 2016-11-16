@@ -2,7 +2,7 @@ import { wrap } from "boom";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
 import { COUCHDB_URL } from "../modules/constants";
-import { User, PasswordResetUser, Database, CouchResponse, CouchDoc } from "gearworks";
+import { User, Database, CouchResponse, CouchDoc } from "gearworks";
 
 const UsersDatabaseInfo = {
     name: "gearworks_users",

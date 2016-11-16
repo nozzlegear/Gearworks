@@ -174,13 +174,4 @@ declare module "gearworks" {
          */
         permissions: string[];
     }
-
-    /**
-     * A user instance for users that have requested a password reset.
-     */
-    export interface PasswordResetUser extends User {
-        passwordResetToken: string;
-
-        passwordResetRequestedAt: Date | string;
-    }
 }
