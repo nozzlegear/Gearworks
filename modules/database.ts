@@ -6,7 +6,7 @@ import { User, Database, CouchResponse, CouchDoc } from "gearworks";
 
 const UsersDatabaseInfo = {
     name: "gearworks_users",
-    indexes: ["shopify_access_token", "password_reset_token", "shop_id"]
+    indexes: ["shopify_access_token", "password_reset_token", "shop_id", "username"]
 };
 
 export default async function configureDatabases() {
@@ -65,7 +65,7 @@ export default async function configureDatabases() {
 
 function prepDatabase<T extends CouchDoc>(name: string) {
     const databaseUrl = `${COUCHDB_URL}/${name}/`;
-    async function checkErrorAndGetBody(result: Response, action: "finding" | "listing" | "counting" | "getting" | "posting" | "putting" | "deleting") {
+    async function checkErrorAndGetBody(result: Response, action: "finding" | "listing" | "counting" | "getting" | "posting" | "putting" | "deleting" | "copying") {
         const body = await result.json();
 
         if (!result.ok) {
@@ -137,7 +137,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
 
             const body: CouchResponse = await checkErrorAndGetBody(result, "posting");
 
-            // Post and PUT requests do not return the object itself. Update the input object with new id and rev values.
+            // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
             return Object.assign({}, data, {_id: body.id, _rev: body.rev}); 
         },
         put: async function (data, rev?) {
@@ -151,8 +151,21 @@ function prepDatabase<T extends CouchDoc>(name: string) {
 
             const body: CouchResponse = await checkErrorAndGetBody(result, "putting");
 
-            // Post and PUT requests do not return the object itself. Update the input object with new id and rev values.
+            // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
             return Object.assign({}, data, {_id: body.id, _rev: body.rev}); 
+        },
+        copy: async function (data, newId) {
+            const result = await fetch(databaseUrl + data._id, {
+                method: "COPY",
+                headers: {
+                    Destination: newId  
+                },
+            })
+
+            const body: CouchResponse = await checkErrorAndGetBody(result, "copying");
+
+            // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
+            return Object.assign({}, data, {_id: body.id, _rev: body.rev});
         },
         delete: async function (id, rev) {
             const result = await fetch(databaseUrl + id + `?${qs({rev})}`, {
