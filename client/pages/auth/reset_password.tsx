@@ -3,9 +3,9 @@ import * as React from 'react';
 import { theme } from "../../app";
 import Box from "../../components/box";
 import Paths from "../../../modules/paths";
-import { Users } from "../../../modules/api";
 import { APP_NAME } from "../../../modules/constants";
-import Observer from "./../../components/observer_component"
+import { Users, ApiError } from "../../../modules/api";
+import Observer from "./../../components/observer_component";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 import EmailIcon from "material-ui/svg-icons/communication/email";
 import { RouterState, RedirectFunction, Link } from "react-router";
@@ -81,27 +81,13 @@ export default class ResetPasswordPage extends Observer<IProps, IState> {
         try {
             const result = await this.api.resetPassword({ reset_token: this.token, new_password: password });
 
-            if (result.status === 401 /* Unauthorized - Token expired */) {
-                this.setState({ loading: false, error: "Your password reset email has expired." })
-
-                return;
-            }
-
-            if (!result.ok) {
-                console.error(result);
-
-                throw new Error("Failed to send reset email.");
-            }
-        } catch (e) {
-            this.setState({ loading: false, error: "Something went wrong and we could not send your password reset email. Please try again." });
-            console.log(e);
-
-            return;
-        }
-
-        this.setState({ loading: false }, () => {
             this.context.router.push(Paths.auth.login);
-        });
+        } catch (e) {
+            const err: ApiError = e;
+            let message = err.unauthorized ? "Your password reset email has expired." : err.message;
+            
+            this.setState({ loading: false, error: message });
+        }
     }
 
     //#endregion

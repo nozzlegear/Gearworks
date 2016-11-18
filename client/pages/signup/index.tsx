@@ -5,7 +5,7 @@ import Box from "../../components/box";
 import { SessionToken } from "gearworks";
 import Paths from "../../../modules/paths";
 import { APP_NAME } from "../../../modules/constants";
-import { ApiResult, Users } from "../../../modules/api";
+import { ApiError, Users } from "../../../modules/api";
 import { AutoPropComponent } from "auto-prop-component";
 import Observer from "../../components/observer_component";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
@@ -66,16 +66,12 @@ export default class SignupPage extends Observer<IProps, IState> {
                 password: this.passwordBox.getValue(),
             });
 
-            if (!result.ok) {
-                this.setState({ loading: false, error: result.error.message });
-
-                return;
-            }
-
-            token = result.data.token;
+            token = result.token;
         }
         catch (e) {
-            this.setState({ loading: false, error: "Something went wrong and we could not create your account." });
+            const err: ApiError = e;
+
+            this.setState({ loading: false, error: err.message });
 
             return;
         }

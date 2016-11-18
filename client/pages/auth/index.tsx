@@ -7,7 +7,7 @@ import { APP_NAME } from "../../../modules/constants";
 import Observer from "../../components/observer_component";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 import { RouterState, RedirectFunction, Link } from "react-router";
-import { Sessions, ApiResult, SessionTokenResponse } from "../../../modules/api";
+import { Sessions, ApiError, SessionTokenResponse } from "../../../modules/api";
 
 export interface IProps extends React.Props<any> {
 
@@ -78,18 +78,16 @@ export default class AuthPage extends Observer<IProps, IState> {
 
         this.mergeState({ loading: true, error: undefined });
 
-        const result = await this.api.create({ username, password });
+        try {
+            const result = await this.api.create({ username, password });
 
-        this.mergeState({ loading: false });
+            store.login(result.token);
+            this.context.router.push(Paths.home.index);
+        } catch (e) {
+            const err: ApiError = e;
 
-        if (!result.ok) {
-            this.setState({ error: result.error.message });
-
-            return;
+            this.setState({ error: err.message, loading: false });
         }
-
-        store.login(result.data.token);
-        this.context.router.push(Paths.home.index);
     }
 
     //#endregion

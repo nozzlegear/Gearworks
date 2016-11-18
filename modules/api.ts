@@ -6,20 +6,40 @@ import { CreateOrderRequest } from "gearworks/requests";
 // Interfaces
 import Order = Models.Order;
 
-export interface ApiError {
-    details?: any;
-    message?: string;
-    unauthorized?: boolean;
-}
+export class ApiError extends Error {
+    constructor(body?: string, data?: Response) {
+        super("Something went wrong and your request could not be completed.");
 
-export interface ApiResult<T> {
-    data: T,
-    body: string,
-    error?: ApiError,
-    ok: boolean,
-    url: string,
-    status: number,
-    statusText: string,
+        if (!data) {
+            this.unauthorized = data.status === 401;
+            this.status = data.status;
+            this.statusText = data.statusText;
+
+            if (body) {
+                try {
+                    const response: { message: string, details: { key: string, errors: string[] }[] } = JSON.parse(body || "{}");
+
+                    this.message = Array.isArray(response.details) ? response.details.map(e => e.errors.join(", ")).join(", ") : response.message;
+                    this.details = response.details;
+                } catch (e) {
+                    console.error("Could not parse response's error JSON.", body);
+                }
+            }
+        } else {
+            // A fetch error occurred.
+            this.status = 503;
+            this.statusText = "Service Unavailable";
+            this.unauthorized = false;
+        }
+    }
+
+    public unauthorized: boolean;
+
+    public status: number;
+
+    public statusText: string;
+
+    public details?: any;
 }
 
 export interface SessionTokenResponse {
@@ -51,56 +71,23 @@ export default class BaseService {
             // Fetch only throws an error when a network error is encountered.
             console.error(`There was a problem the fetch operation for ${url}`, e);
 
-            throw e;
+            throw new ApiError();
         }
 
         try {
             textBody = await result.text();
-        }
-        catch (e) {
-            console.error(`There was a problem while reading the result's body text for ${url}`, e);
-        }
-
-        try {
             parsedBody = JSON.parse(textBody || "{}");
-        }
-        catch (e) {
-            console.error(`There was a problem while parsing the result's JSON for ${url}`, e);
-        }
+        } catch (e) {
+            console.error("Could not read or parse body text.", e);
 
-        let output: ApiResult<T> = {
-            data: parsedBody,
-            body: textBody,
-            ok: result.ok,
-            url: result.url,
-            status: result.status,
-            statusText: result.statusText,
-        };
+            throw new ApiError();
+        }
 
         if (!result.ok) {
-            console.error(new Date().toString(), result);
-
-            const defaultMessage = "Something went wrong and your request could not be completed.";
-            const error: ApiError = {
-                unauthorized: result.status === 401,
-            }
-
-            try {
-                const response: { message: string, details: { key: string, errors: string[] }[] } = JSON.parse(output.body || "{}");
-
-                error.message = Array.isArray(response.details) ? response.details.map(e => e.errors.join(", ")).join(", ") : response.message;
-                error.details = response.details;
-            } catch (e) {
-                console.error("Could not parse response's error JSON.", e, error, output.body);
-
-                error.message = defaultMessage;
-            }
-
-            error.message = error.message || defaultMessage;
-            output.error = error;
+            throw new ApiError(textBody, result);
         }
 
-        return output;
+        return parsedBody;
     }
 }
 
@@ -117,7 +104,7 @@ export class Users extends BaseService {
 
     public changePassword = (data: { new_password: string; old_password: string; }) => this.sendRequest<SessionTokenResponse>("password", "PUT", data);
 
-    public changeUsername = (data: {password: string, username: string}) => this.sendRequest<SessionTokenResponse>("username", "PUT", data);
+    public changeUsername = (data: { password: string, username: string }) => this.sendRequest<SessionTokenResponse>("username", "PUT", data);
 }
 
 export class Shopify extends BaseService {

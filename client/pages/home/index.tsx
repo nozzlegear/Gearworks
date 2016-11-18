@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { theme } from "../../app";
 import { observer } from "mobx-react";
-import store from "../../stores/auth";
 import { Models } from "shopify-prime";
-import { Shopify } from "../../../modules/api";
 import AddIcon from "material-ui/svg-icons/content/add";
+import { Shopify, ApiError } from "../../../modules/api";
 import Observer from "../../components/observer_component";
 import DeleteIcon from "material-ui/svg-icons/action/delete";
 import NewOrderDialog from "../../components/new_order_dialog";
@@ -13,8 +12,6 @@ import {
     CircularProgress,
     Toolbar,
     ToolbarGroup,
-    ToolbarTitle,
-    FontIcon,
     FloatingActionButton,
     DropDownMenu,
     MenuItem,
@@ -103,31 +100,22 @@ export default class HomePage extends Observer<IProps, IState> {
         this.setState({ loading: true, selectedRows: [] });
 
         const api = new Shopify(this.props.auth.token);
-        let error: string = undefined;
-        let order: any;
+        let order: Models.Order;
 
         try {
-            const result = await (setStatusTo === "open" ? api.openOrder(id) : api.closeOrder(id));
-
-            if (!result.ok) {
-                error = result.error.message;
-            } else {
-                order = result.data;
-            }
+            order = await (setStatusTo === "open" ? api.openOrder(id) : api.closeOrder(id));
         } catch (e) {
-            console.error(e);
+            const err: ApiError = e;
 
-            error = "Something went wrong and your order could not be updated.";
+            this.setState({ loading: false, error: err.message });
         }
 
-        this.setState({ loading: false, error: error }, () => {
-            if (order) {
-                this.props.dashboard.updateOrder(id, order);
-            }
+        this.setState({loading: false, error: undefined}, () => {
+            this.props.dashboard.updateOrder(id, order);
         })
     }
 
-    private async deleteOrder(id: number | string) {
+    private async deleteOrder(id: number) {
         if (this.state.loading) {
             return;
         }
@@ -135,46 +123,34 @@ export default class HomePage extends Observer<IProps, IState> {
         this.setState({ loading: true, selectedRows: [] });
 
         const api = new Shopify(this.props.auth.token);
-        let error: string = undefined;
-        let success = false;
+        let error: string;
 
         try {
-            const result = await api.deleteOrder(id);
-
-            success = result.ok;
-            error = result.error && result.error.message;
+            await api.deleteOrder(id);
         } catch (e) {
-            console.error(e);
+            const err: ApiError = e;
 
-            error = "Something went wrong and your order could not be deleted.";
+            error = err.message;
         }
 
-        this.setState({ loading: false, error: error }, () => {
-            if (success) {
-                this.props.dashboard.removeOrder(parseInt(id as string));
+        this.setState({ loading: false, error }, () => {
+            if (!error) {
+                this.props.dashboard.removeOrder(id);
             }
-        })
+        });
     }
 
     public async componentDidMount() {
         const api = new Shopify(this.props.auth.token);
         let orders: Models.Order[] = [];
-        let error: string = undefined;
+        let error: string;
 
         try {
-            const result = await api.listOrders({ limit: 100, page: 1 });
-
-            if (!result.ok) {
-                console.error(result.error);
-
-                error = result.error.message;
-            } else {
-                orders = result.data;
-            }
+            orders = await api.listOrders({ limit: 100, page: 1 });
         } catch (e) {
-            console.error(e);
+            const err: ApiError = e;
 
-            error = "Something went wrong and we could not load your orders.";
+            error = err.message;
         }
 
         this.setState({ error }, () => {

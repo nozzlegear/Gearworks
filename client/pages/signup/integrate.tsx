@@ -5,7 +5,7 @@ import { SessionToken } from "gearworks";
 import { Paths } from "../../../modules/paths";
 import { APP_NAME } from "../../../modules/constants";
 import { AutoPropComponent } from "auto-prop-component";
-import { ApiResult, Shopify } from "../../../modules/api";
+import { ApiError, Shopify } from "../../../modules/api";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 
 export interface IProps {
@@ -31,7 +31,7 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = { };
+        let state: IState = {};
 
         if (!useSetState) {
             this.state = state;
@@ -57,30 +57,20 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
 
         this.setState({ loading: true, error: undefined });
 
-        let result: ApiResult<{ url: string }>;
-        let error: string;
-
         // Verify the shop url first
         try {
-            result = await api.createAuthorizationUrl({
+            const result = await api.createAuthorizationUrl({
                 shop_domain: shopUrl,
                 redirect_url: `${window.location.protocol}//${window.location.host}${Paths.signup.finalizeIntegration}`,
             });
+
+            // Send the user to the integration URL
+            window.location.href = result.url;
         } catch (e) {
-            error = "Something went wrong and we could not verify your Shopify URL.";
+            const err: ApiError = e;
+
+            this.setState({ loading: false, error: err.message });
         }
-
-
-        if (error || !result.ok) {
-            error = error || result.error.message || "Something went wrong and your request could not be completed.";
-             
-            this.setState({ loading: false, error });
-
-            return;
-        }
-
-        // Send the user to the integration URL
-        window.location.href = result.data.url;
     }
 
     public componentDidMount() {

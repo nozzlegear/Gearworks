@@ -2,8 +2,8 @@ import * as React from 'react';
 import { theme } from "../../app";
 import Box from "../../components/box";
 import Paths from "../../../modules/paths";
-import { Users } from "../../../modules/api";
 import { APP_NAME } from "../../../modules/constants";
+import { Users, ApiError } from "../../../modules/api";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 import EmailIcon from "material-ui/svg-icons/communication/email";
 import { RouterState, RedirectFunction, Link } from "react-router";
@@ -67,20 +67,14 @@ export default class ForgotPasswordPage extends React.Component<IProps, IState> 
         this.setState({ loading: true, error: undefined });
 
         try {
-            const result = await this.api.forgotPassword({username});
+            const result = await this.api.forgotPassword({ username });
 
-            if (!result.ok) {
-                console.error(result);
-                throw new Error("Failed to send reset email.");
-            }
+            this.setState({ loading: false, sent: true });
         } catch (e) {
-            this.setState({ loading: false, error: "Something went wrong and we could not send your password reset email. Please try again." });
-            console.log(e);
+            const err: ApiError = e;
 
-            return;
+            this.setState({ loading: false, error: err.message });
         }
-
-        this.setState({ loading: false, sent: true });
     }
 
     //#endregion
@@ -107,23 +101,23 @@ export default class ForgotPasswordPage extends React.Component<IProps, IState> 
 
         if (sent) {
             body = (
-                <Box 
-                    title="Password reset email sent." 
-                    description="Your password reset request has been sent. Please allow up to 10 minutes for it to arrive, and be sure you check your spam or junk mail folder." 
+                <Box
+                    title="Password reset email sent."
+                    description="Your password reset request has been sent. Please allow up to 10 minutes for it to arrive, and be sure you check your spam or junk mail folder."
                     error={error}>
-                    <div style={{paddingTop: "40px", paddingBottom: "40px", textAlign: "center"}}>
-                        <EmailIcon style={{height: "125px", width: "125px", color: theme.rawTheme.palette.primary1Color}} />
+                    <div style={{ paddingTop: "40px", paddingBottom: "40px", textAlign: "center" }}>
+                        <EmailIcon style={{ height: "125px", width: "125px", color: theme.rawTheme.palette.primary1Color }} />
                     </div>
                 </Box>
             );
         } else {
             const footer = (
-                <div style={{textAlign: "center"}}>
-                    <RaisedButton 
-                        onTouchTap={e => this.handleSignIn(e)} 
-                        primary={true} 
-                        fullWidth={true} 
-                        label={loading ? "Sending reset email" : "Send password reset email"} 
+                <div style={{ textAlign: "center" }}>
+                    <RaisedButton
+                        onTouchTap={e => this.handleSignIn(e)}
+                        primary={true}
+                        fullWidth={true}
+                        label={loading ? "Sending reset email" : "Send password reset email"}
                         icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null} />
                 </div>
             );

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import store from "../../stores/auth";
-import { Users, ApiResult, SessionTokenResponse } from "../../../modules/api";
+import { Users, ApiError, SessionTokenResponse } from "../../../modules/api";
 import { Dialog, FlatButton, RaisedButton, TextField, FontIcon } from "material-ui";
 
 export interface IProps extends React.Props<any> {
@@ -59,8 +59,8 @@ export default class AccountDialog extends React.Component<IProps, IState> {
             return;
         }
 
-        let request: Promise<ApiResult<SessionTokenResponse>>;
-        let fetchError;
+        let request: Promise<SessionTokenResponse>;
+        let token: string;
 
         if (this.props.type === "password") {
             const newPassword = this.newPasswordControl.getValue();
@@ -80,25 +80,22 @@ export default class AccountDialog extends React.Component<IProps, IState> {
 
         this.setState({ saving: true, error: undefined });
 
-        const result: ApiResult<SessionTokenResponse> = await request.catch(e => fetchError = e);
+        try {
+            const result = await request;
 
-        this.setState({ saving: false });
+            token = result.token;
+        } catch (e) {
+            const err: ApiError = e;
 
-        if (fetchError) {
-            this.setState({error: "Something went wrong and your request could not be completed."});
-            console.error(fetchError);
-
-            return;
-        }
-
-        if (!result.ok) {
-            this.setState({ error: result.error.message });
+            this.setState({ error: err.message, saving: false });
 
             return;
         }
 
-        store.login(result.data.token);
-        this.props.onRequestClose();
+        this.setState({ saving: false }, () => {
+            store.login(token);
+            this.props.onRequestClose();
+        });
     }
 
     public componentDidMount() {
@@ -118,11 +115,11 @@ export default class AccountDialog extends React.Component<IProps, IState> {
         const { error, saving } = this.state;
         const actions = [
             <FlatButton key="close-dialog-button" label="Close" onTouchTap={e => onRequestClose()} style={{ float: "left" }} />,
-            <RaisedButton 
-                key="save-dialog-button" 
+            <RaisedButton
+                key="save-dialog-button"
                 label={saving ? "Saving changes" : "Save changes"}
-                icon={saving ? <FontIcon className="fa fa-spinner fa-spin" /> : null} 
-                primary={true} 
+                icon={saving ? <FontIcon className="fa fa-spinner fa-spin" /> : null}
+                primary={true}
                 onTouchTap={e => this.saveChanges()} />
         ];
         let body: JSX.Element;
@@ -142,7 +139,7 @@ export default class AccountDialog extends React.Component<IProps, IState> {
                 onRequestClose={buttonClicked => onRequestClose()}>
                 {body}
                 <TextField floatingLabelText="Current Password" fullWidth={true} type="password" ref={c => this.oldPasswordControl = c} />
-                { error ? <p className="error">{error}</p> : null}
+                {error ? <p className="error">{error}</p> : null}
             </Dialog>
         );
     }

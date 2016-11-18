@@ -4,8 +4,8 @@ import { observer } from "mobx-react";
 import store from "../../stores/auth";
 import Box from "../../components/box";
 import { Paths } from "../../../modules/paths";
-import { Shopify } from "../../../modules/api";
 import { blueGrey700 } from "material-ui/styles/colors";
+import { Shopify, ApiError } from "../../../modules/api";
 import Observer from "../../components/observer_component";
 import { CircularProgress, RaisedButton, FontIcon } from "material-ui";
 
@@ -48,19 +48,14 @@ export default class FinalizePage extends Observer<IProps, IState> {
         const api = new Shopify(this.props.auth.token);
 
         try {
-            const req = await api.authorize(qs);
+            const result = await api.authorize(qs);
 
-            if (!req.ok) {
-                this.setState({ error: req.error.message });
-
-                return;
-            }
-
-            this.props.auth.login(req.data.token);
+            this.props.auth.login(result.token);
             this.context.router.push(Paths.home.index);
         } catch (e) {
-            console.error(e);
-            this.setState({ error: "Something went wrong and we could not integrate your Shopify store." });
+            const err: ApiError = e;
+
+            this.setState({ error: err.message });
         }
     }
 
