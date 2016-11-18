@@ -4,4 +4,4 @@ Gearworks is a template for new Shopify apps using the "CETR" stack — Express 
 
 **This app template is a work in progress. Please check back soon!**
 
-![Gearworks](https://i.imgur.com/DbtWFY5.gif)
+![Gearworks](https://i.imgur.com/hN9PsDu.gif)
