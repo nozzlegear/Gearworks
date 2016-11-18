@@ -1,5 +1,6 @@
 import * as React from 'react';
 import store from "../../stores/auth";
+import Router from "../../components/router";
 import { Users, ApiError, SessionTokenResponse } from "../../../modules/api";
 import { Dialog, FlatButton, RaisedButton, TextField, FontIcon } from "material-ui";
 
@@ -14,9 +15,9 @@ export interface IState {
     error?: string;
 }
 
-export default class AccountDialog extends React.Component<IProps, IState> {
-    constructor(props: IProps) {
-        super(props);
+export default class AccountDialog extends Router<IProps, IState> {
+    constructor(props: IProps, context) {
+        super(props, context);
 
         this.configureState(props, false);
     }
@@ -86,6 +87,10 @@ export default class AccountDialog extends React.Component<IProps, IState> {
             token = result.token;
         } catch (e) {
             const err: ApiError = e;
+
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.account.index)) {
+                return;
+            }
 
             this.setState({ error: err.message, saving: false });
 

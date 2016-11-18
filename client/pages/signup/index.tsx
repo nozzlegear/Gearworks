@@ -3,11 +3,9 @@ import { Link } from "react-router";
 import store from "../../stores/auth";
 import Box from "../../components/box";
 import { SessionToken } from "gearworks";
-import Paths from "../../../modules/paths";
+import Router from "../../components/router";
 import { APP_NAME } from "../../../modules/constants";
 import { ApiError, Users } from "../../../modules/api";
-import { AutoPropComponent } from "auto-prop-component";
-import Observer from "../../components/observer_component";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 
 export interface IProps {
@@ -19,7 +17,7 @@ export interface IState {
     error?: string;
 }
 
-export default class SignupPage extends Observer<IProps, IState> {
+export default class SignupPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -77,7 +75,7 @@ export default class SignupPage extends Observer<IProps, IState> {
         }
 
         store.login(token);
-        this.context.router.push(Paths.signup.integrate);
+        this.context.router.push(this.PATHS.signup.integrate);
     }
 
     public componentDidMount() {
@@ -124,7 +122,7 @@ export default class SignupPage extends Observer<IProps, IState> {
                             </div>
                         </Box>
                         <div className="info-line">
-                            <Link to={Paths.auth.login}>{"Already have an account? Click here to log in."}</Link>
+                            <Link to={this.PATHS.auth.login}>{"Already have an account? Click here to log in."}</Link>
                         </div>
                     </div>
                 </div>

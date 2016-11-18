@@ -87,11 +87,9 @@ export function MinimalMain(props) {
     function checkAuthState(requireShopifyIntegration: boolean) {
         return (args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) => {
             if (AuthStore.sessionIsInvalid) {
-                console.log("User's auth token is invalid.");
-                replace(Paths.auth.login);
+                replace(Paths.auth.login + window.location.search);
             } else if (requireShopifyIntegration && !AuthStore.session.shopify_access_token) {
-                console.log("User has not integrated Shopify store.");
-                replace(Paths.signup.integrate);
+                replace(Paths.signup.integrate + window.location.search);
             }
 
             callback();

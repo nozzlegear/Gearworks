@@ -1,10 +1,10 @@
+import * as qs from "qs";
 import * as React from 'react';
 import * as Bluebird from "bluebird";
 import store from "../../stores/auth";
 import Box from "../../components/box";
-import Paths from "../../../modules/paths";
+import Router from "../../components/router";
 import { APP_NAME } from "../../../modules/constants";
-import Observer from "../../components/observer_component";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 import { RouterState, RedirectFunction, Link } from "react-router";
 import { Sessions, ApiError, SessionTokenResponse } from "../../../modules/api";
@@ -18,7 +18,7 @@ export interface IState {
     loading?: boolean;
 }
 
-export default class AuthPage extends Observer<IProps, IState> {
+export default class AuthPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -27,7 +27,9 @@ export default class AuthPage extends Observer<IProps, IState> {
 
     public state: IState = {};
 
-    private pageContainer: Element;
+    private redirectPath: string;
+
+    private redirectQuerystring: Object;
 
     private api = new Sessions();
 
@@ -62,31 +64,40 @@ export default class AuthPage extends Observer<IProps, IState> {
 
         const username = this.emailBox.getValue();
         const password = this.passwordBox.getValue();
-        let fetchError;
+        let token: string;
 
         if (!username) {
-            this.mergeState({ error: "You must enter your username." });
+            this.setState({ error: "You must enter your username." });
 
             return;
         }
 
         if (!password) {
-            this.mergeState({ error: "You must enter your password." });
+            this.setState({ error: "You must enter your password." });
 
             return;
         }
 
-        this.mergeState({ loading: true, error: undefined });
+        this.setState({ loading: true, error: undefined });
 
         try {
             const result = await this.api.create({ username, password });
 
-            store.login(result.token);
-            this.context.router.push(Paths.home.index);
+            token = result.token;
         } catch (e) {
             const err: ApiError = e;
 
             this.setState({ error: err.message, loading: false });
+
+            return;
+        }
+
+        store.login(token);
+
+        if (this.redirectPath) {
+            this.context.router.push(`${this.redirectPath}?${qs.stringify(this.redirectQuerystring)}`);
+        } else {
+            this.context.router.push(this.PATHS.home.index);
         }
     }
 
@@ -97,7 +108,12 @@ export default class AuthPage extends Observer<IProps, IState> {
     }
 
     public componentDidMount() {
+        const query = qs.parse(window.location.search.replace(/^\?/i, "")) as { redirect?: string, qs?: Object };
 
+        if (query.redirect) {
+            this.redirectPath = query.redirect;
+            this.redirectQuerystring = query.qs;
+        }
     }
 
     public componentDidUpdate() {
@@ -119,7 +135,7 @@ export default class AuthPage extends Observer<IProps, IState> {
                     label={loading ? "Signing in" : "Sign in"}
                     icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null}
                     style={{ marginBottom: "25px" }} />
-                <Link to={Paths.auth.forgotPassword}>{"Forgot your password?"}</Link>
+                <Link to={this.PATHS.auth.forgotPassword}>{"Forgot your password?"}</Link>
             </div>
         );
 
@@ -144,7 +160,7 @@ export default class AuthPage extends Observer<IProps, IState> {
                             </div>
                         </Box>
                         <div className="info-line">
-                            <Link to={Paths.signup.index}>{"Don't have an account? Click here to create one."}</Link>
+                            <Link to={this.PATHS.signup.index}>{"Don't have an account? Click here to create one."}</Link>
                         </div>
                     </div>
                 </div>

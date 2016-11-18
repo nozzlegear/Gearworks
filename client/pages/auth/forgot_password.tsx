@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { theme } from "../../app";
 import Box from "../../components/box";
-import Paths from "../../../modules/paths";
+import Router from "../../components/router";
 import { APP_NAME } from "../../../modules/constants";
 import { Users, ApiError } from "../../../modules/api";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
@@ -18,7 +18,7 @@ export interface IState {
     sent?: boolean;
 }
 
-export default class ForgotPasswordPage extends React.Component<IProps, IState> {
+export default class ForgotPasswordPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -141,7 +141,7 @@ export default class ForgotPasswordPage extends React.Component<IProps, IState> 
                     <div className="pure-u-12-24">
                         {body}
                         <div className="info-line">
-                            <Link to={Paths.auth.login}>{"Already know your password? Click here to log in."}</Link>
+                            <Link to={this.PATHS.auth.login}>{"Already know your password? Click here to log in."}</Link>
                         </div>
                     </div>
                 </div>

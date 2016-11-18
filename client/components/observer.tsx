@@ -1,16 +1,16 @@
+import * as qs from "qs";
+import Router from "./router";
 import * as React from 'react';
 import { History } from "history";
-import { Router } from "react-router";
 import { AuthStore } from "../stores/auth";
 import { DashboardStore } from "../stores/dashboard";
-import { AutoPropComponent } from "auto-prop-component";
 
 interface StoreProps {
     auth?: AuthStore,
     dashboard?: DashboardStore, 
 }
 
-abstract class ObserverComponent<IProps, IState> extends AutoPropComponent<IProps & StoreProps, IState> {
+abstract class ObserverComponent<IProps, IState> extends Router<IProps & StoreProps, IState> {
     constructor(props, context) {
         super(props, context);
     }

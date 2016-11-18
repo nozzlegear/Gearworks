@@ -1,4 +1,9 @@
 import * as React from 'react';
+import { Models } from "shopify-prime";
+import Paths from "../../../modules/paths";
+import Router from "../../components/router";
+import Dashboard from "../../stores/dashboard";
+import { Shopify, ApiError } from "../../../modules/api";
 import {
     Dialog,
     RaisedButton,
@@ -10,8 +15,6 @@ import {
     TouchTapEvent,
     CircularProgress,
 } from "material-ui";
-import { Shopify } from "../../modules/api";
-import Dashboard from "../stores/dashboard";
 
 export interface IProps extends React.Props<any> {
     open: boolean;
@@ -24,9 +27,9 @@ export interface IState {
     loading?: boolean;
 }
 
-export default class NewOrderDialog extends React.Component<IProps, IState> {
-    constructor(props: IProps) {
-        super(props);
+export default class NewOrderDialog extends Router<IProps, IState> {
+    constructor(props: IProps, context) {
+        super(props, context);
 
         this.configureState(props, false);
     }
@@ -75,11 +78,11 @@ export default class NewOrderDialog extends React.Component<IProps, IState> {
         this.setState({ loading: true, error: undefined });
 
         const api = new Shopify(this.props.apiToken);
-        let order: any;
+        let order: Models.Order;
         let error: string = undefined;
 
         try {
-            const result = await api.createOrder({
+            order = await api.createOrder({
                 city: this.cityControl.getValue(),
                 email: this.emailControl.getValue(),
                 line_item: this.lineItemControl.getValue(),
@@ -89,19 +92,17 @@ export default class NewOrderDialog extends React.Component<IProps, IState> {
                 street: this.streetControl.getValue(),
                 zip: this.zipControl.getValue(),
             });
-
-            if (!result.ok) {
-                error = result.error.message;
-            } else {
-                order = result.data;
-            }
         } catch (e) {
-            console.error(e);
+            const err: ApiError = e;
 
-            error = "Something went wrong and your order could not be saved.";
+            if (err.unauthorized && this.handleUnauthorized(Paths.home.index)) {
+                return;
+            }
+
+            error = err.message;
         }
 
-        this.setState({ error: error, loading: false }, () => {
+        this.setState({ error, loading: false }, () => {
             if (order) {
                 console.log("TODO: clear form.");
 

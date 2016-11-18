@@ -2,11 +2,11 @@ import * as React from 'react';
 import { theme } from "../../app";
 import { observer } from "mobx-react";
 import { Models } from "shopify-prime";
+import NewOrderDialog from "./new_order_dialog";
+import Observer from "../../components/observer";
 import AddIcon from "material-ui/svg-icons/content/add";
 import { Shopify, ApiError } from "../../../modules/api";
-import Observer from "../../components/observer_component";
 import DeleteIcon from "material-ui/svg-icons/action/delete";
-import NewOrderDialog from "../../components/new_order_dialog";
 import SelectAllIcon from "material-ui/svg-icons/content/select-all";
 import {
     CircularProgress,
@@ -107,7 +107,13 @@ export default class HomePage extends Observer<IProps, IState> {
         } catch (e) {
             const err: ApiError = e;
 
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.home.index)) {
+                return;
+            }
+
             this.setState({ loading: false, error: err.message });
+
+            return;
         }
 
         this.setState({loading: false, error: undefined}, () => {
@@ -130,6 +136,10 @@ export default class HomePage extends Observer<IProps, IState> {
         } catch (e) {
             const err: ApiError = e;
 
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.home.index)) {
+                return;
+            }
+
             error = err.message;
         }
 
@@ -149,6 +159,10 @@ export default class HomePage extends Observer<IProps, IState> {
             orders = await api.listOrders({ limit: 100, page: 1 });
         } catch (e) {
             const err: ApiError = e;
+            
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.home.index)) {
+                return;
+            }
 
             error = err.message;
         }

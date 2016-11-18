@@ -2,10 +2,9 @@ import * as qs from "qs";
 import * as React from 'react';
 import { theme } from "../../app";
 import Box from "../../components/box";
-import Paths from "../../../modules/paths";
+import Router from "./../../components/router";
 import { APP_NAME } from "../../../modules/constants";
 import { Users, ApiError } from "../../../modules/api";
-import Observer from "./../../components/observer_component";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 import EmailIcon from "material-ui/svg-icons/communication/email";
 import { RouterState, RedirectFunction, Link } from "react-router";
@@ -19,7 +18,7 @@ export interface IState {
     loading?: boolean;
 }
 
-export default class ResetPasswordPage extends Observer<IProps, IState> {
+export default class ResetPasswordPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -81,7 +80,7 @@ export default class ResetPasswordPage extends Observer<IProps, IState> {
         try {
             const result = await this.api.resetPassword({ reset_token: this.token, new_password: password });
 
-            this.context.router.push(Paths.auth.login);
+            this.context.router.push(this.PATHS.auth.login);
         } catch (e) {
             const err: ApiError = e;
             let message = err.unauthorized ? "Your password reset email has expired." : err.message;
@@ -100,7 +99,7 @@ export default class ResetPasswordPage extends Observer<IProps, IState> {
         const query = qs.parse(window.location.search.replace(/^\?/, "")) as { token: string };
 
         if (!query.token) {
-            this.context.router.replace(Paths.auth.forgotPassword);
+            this.context.router.replace(this.PATHS.auth.forgotPassword);
 
             return;
         }
@@ -150,7 +149,7 @@ export default class ResetPasswordPage extends Observer<IProps, IState> {
                             </div>
                         </Box>
                         <div className="info-line">
-                            <Link to={Paths.auth.login}>{"Already know your password? Click here to log in."}</Link>
+                            <Link to={this.PATHS.auth.login}>{"Already know your password? Click here to log in."}</Link>
                         </div>
                     </div>
                 </div>

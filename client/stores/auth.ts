@@ -29,8 +29,6 @@ export class AuthStore {
     @action login(token: string) {
         this.session = decode(token, undefined, true);
 
-        console.log("User was logged in", this.session);
-
         this.token = token;
     }
 

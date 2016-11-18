@@ -2,9 +2,8 @@ import * as React from 'react';
 import store from "../../stores/auth";
 import Box from "../../components/box";
 import { SessionToken } from "gearworks";
-import { Paths } from "../../../modules/paths";
+import Router from "../../components/router";
 import { APP_NAME } from "../../../modules/constants";
-import { AutoPropComponent } from "auto-prop-component";
 import { ApiError, Shopify } from "../../../modules/api";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 
@@ -17,7 +16,7 @@ export interface IState {
     error?: string;
 }
 
-export default class IntegratePage extends AutoPropComponent<IProps, IState> {
+export default class IntegratePage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -61,13 +60,17 @@ export default class IntegratePage extends AutoPropComponent<IProps, IState> {
         try {
             const result = await api.createAuthorizationUrl({
                 shop_domain: shopUrl,
-                redirect_url: `${window.location.protocol}//${window.location.host}${Paths.signup.finalizeIntegration}`,
+                redirect_url: `${window.location.protocol}//${window.location.host}${this.PATHS.signup.finalizeIntegration}`,
             });
 
             // Send the user to the integration URL
             window.location.href = result.url;
         } catch (e) {
             const err: ApiError = e;
+
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.signup.integrate)) {
+                return;
+            }
 
             this.setState({ loading: false, error: err.message });
         }

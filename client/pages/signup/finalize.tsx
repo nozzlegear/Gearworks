@@ -1,12 +1,10 @@
 import { parse } from "qs";
 import * as React from 'react';
-import { observer } from "mobx-react";
 import store from "../../stores/auth";
 import Box from "../../components/box";
-import { Paths } from "../../../modules/paths";
+import Router from "../../components/router";
 import { blueGrey700 } from "material-ui/styles/colors";
 import { Shopify, ApiError } from "../../../modules/api";
-import Observer from "../../components/observer_component";
 import { CircularProgress, RaisedButton, FontIcon } from "material-ui";
 
 export interface IProps {
@@ -17,8 +15,7 @@ export interface IState {
     error?: string;
 }
 
-@observer(["auth", "dashboard"])
-export default class FinalizePage extends Observer<IProps, IState> {
+export default class FinalizePage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -45,15 +42,19 @@ export default class FinalizePage extends Observer<IProps, IState> {
 
     public async componentDidMount() {
         const qs = parse(window.location.search.replace(/^\?/i, "")) as { code: string, shop: string, hmac: string, state?: string };
-        const api = new Shopify(this.props.auth.token);
+        const api = new Shopify(store.token);
 
         try {
             const result = await api.authorize(qs);
 
-            this.props.auth.login(result.token);
-            this.context.router.push(Paths.home.index);
+            store.login(result.token);
+            this.context.router.push(this.PATHS.home.index);
         } catch (e) {
             const err: ApiError = e;
+
+            if (err.unauthorized && this.handleUnauthorized(this.PATHS.signup.finalizeIntegration, qs)) {
+                return;
+            }
 
             this.setState({ error: err.message });
         }
@@ -62,7 +63,7 @@ export default class FinalizePage extends Observer<IProps, IState> {
     private tryAgain(e: React.FormEvent<any> | React.MouseEvent<any>) {
         e.preventDefault();
 
-        this.context.router.push(Paths.signup.integrate);
+        this.context.router.push(this.PATHS.signup.integrate);
     }
 
     public componentDidUpdate() {

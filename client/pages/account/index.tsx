@@ -1,8 +1,8 @@
-import Dialog from "./dialog"
+import Dialog from "./dialog";
 import * as React from 'react';
 import * as gravatar from "gravatar";
 import { observer } from "mobx-react";
-import Observer from "../../components/observer_component";
+import Observer from "../../components/observer";
 import {
     Card,
     CardHeader,

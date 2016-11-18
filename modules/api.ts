@@ -10,7 +10,7 @@ export class ApiError extends Error {
     constructor(body?: string, data?: Response) {
         super("Something went wrong and your request could not be completed.");
 
-        if (!data) {
+        if (!!data) {
             this.unauthorized = data.status === 401;
             this.status = data.status;
             this.statusText = data.statusText;

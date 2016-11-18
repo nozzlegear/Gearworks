@@ -103,17 +103,8 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const model = req.validatedBody as { username: string };
             let user: User;
 
-            try {
-                user = await users.get(model.username.toLowerCase());
-            }
-            catch (e) {
-                const error: boom.BoomError = e;
-
-                if (error.output && error.output.statusCode !== 404) {
-                    console.error(`Error getting user ${model.username} from database.`, e)
-
-                    return next(e);
-                }
+            if (!users.exists(model.username.toLowerCase())) {
+                // Do not let the client know that the username does not exist.
 
                 return next();
             }
