@@ -45,7 +45,7 @@ export default class FinalizePage extends Router<IProps, IState> {
         const api = new Shopify(store.token);
 
         try {
-            const result = await api.authorize(qs);
+            const result = await api.authorize(qs, window.location.search);
 
             store.login(result.token);
             this.context.router.push(this.PATHS.home.index);

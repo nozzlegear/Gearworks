@@ -41,6 +41,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         method: "post",
         path: BASE_PATH + "shopify/authorize",
         requireAuth: true,
+        validateShopifyRequest: true,
         bodyValidation: joi.object({
             code: joi.string().required(),
             shop: joi.string().required(),

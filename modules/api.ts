@@ -114,7 +114,7 @@ export class Shopify extends BaseService {
 
     public createAuthorizationUrl = (data: { shop_domain: string; redirect_url: string }) => this.sendRequest<{ url: string }>("url", "GET", data);
 
-    public authorize = (data: { code: string, shop: string, hmac: string, state?: string }) => this.sendRequest<SessionTokenResponse>("authorize", "POST", data);
+    public authorize = (data: { code: string, shop: string, hmac: string, state?: string }, fullQueryString: string) => this.sendRequest<SessionTokenResponse>(`authorize?${fullQueryString.replace(/^\?/, "")}`, "POST", data);
 
     public listOrders = (data: { limit?: number; page?: number; } = {}) => this.sendRequest<Order[]>(`orders`, "GET", data);
 

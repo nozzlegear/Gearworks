@@ -14,6 +14,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         path: BASE_PATH + "app-uninstalled",
         method: "post",
         requireAuth: false,
+        validateShopifyWebhook: true,
         handler: async function (req, res, next) {
             const query = req.query as { shop_id: string, shop: string };
             const userSearch = await users.find({

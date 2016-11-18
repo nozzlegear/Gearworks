@@ -2,7 +2,7 @@ import { Auth } from "shopify-prime";
 import * as Bluebird from "bluebird";
 import { Schema, validate } from "joi";
 import { decode, encode } from "jwt-simple";
-import { badData, unauthorized } from "boom";
+import { badData, unauthorized, forbidden } from "boom";
 import { seal, unseal } from "../modules/encryption";
 import { Express, Request, Response, NextFunction } from "express";
 import { AUTH_HEADER_NAME, JWT_SECRET_KEY, SEALABLE_USER_PROPERTIES, SHOPIFY_SECRET_KEY } from "../modules/constants";
@@ -121,7 +121,7 @@ export default async function registerAllRoutes(app: Express) {
                 const isValid = await Auth.isAuthenticRequest(req.query, SHOPIFY_SECRET_KEY);
 
                 if (!isValid) {
-                    const error = unauthorized("Request does not pass Shopify's request validation scheme.");
+                    const error = forbidden("Request does not pass Shopify's request validation scheme.");
 
                     return next(error);
                 }
@@ -139,7 +139,7 @@ export default async function registerAllRoutes(app: Express) {
                 const isValid = await Auth.isAuthenticWebhook(req.headers, rawBody, SHOPIFY_SECRET_KEY);
 
                 if (!isValid) {
-                    const error = unauthorized("Request does not pass Shopify's webhook validation scheme.")
+                    const error = forbidden("Request does not pass Shopify's webhook validation scheme.")
 
                     return next(error);
                 }
@@ -149,7 +149,7 @@ export default async function registerAllRoutes(app: Express) {
                 const isValid = await Auth.isAuthenticProxyRequest(req.query, SHOPIFY_SECRET_KEY);
 
                 if (!isValid) {
-                    const error = unauthorized("Request does not pass Shopify's proxy page validation scheme.");
+                    const error = forbidden("Request does not pass Shopify's proxy page validation scheme.");
 
                     return next(error);
                 }
