@@ -1,0 +1,174 @@
+containerPadding = 1.5rem;
+fontFamily = 'Roboto', sans-serif;
+appBarHeight = 64px;
+footerHeight = 166px;
+
+html { 
+    /* CSS font-size reset for rem sizing. Makes 1.5rem = 15px, 2rem = 20px, etc. */
+    font-size: 62.5%; 
+} 
+
+body {
+    padding:0;
+    margin:0;
+    font-size: 1.5rem;
+    color: #444;
+    font-family: fontFamily;
+}
+
+h1,h2,h3,h4,h5,h6,p,ul,ol,li,span,a,div {
+    font-family: fontFamily;
+}
+
+container, main {
+    display: block;
+}
+
+container#contenthost{
+    height:100vh;
+    overflow-y: auto;
+}
+
+a {
+    text-decoration: none;
+
+    &:hover, &:focus{
+        text-decoration: none;
+    }
+}
+
+.info-line {
+    text-align: center;
+    color: #FFF;
+    font-size: 1.5rem;
+    font-weight: 500;
+    width: 80%;
+    margin: 0 auto;
+
+    a {
+        color: #fff;
+        text-decoration: underline;
+    }
+}
+
+main#app{
+    height:100vh;
+
+    &.minimal{
+        background: #354b72;
+        color:#fff;
+
+        .page-header {
+            margin:0;
+            border:0;
+
+            > a {
+                display:block;
+                padding: 6.5rem 0;
+                text-align: center;
+                color: #fff;
+                font-size: 31px;
+                font-family: "Lato", "Helvetica Neue", Arial;
+                text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);
+                transition: color 0.25s linear;
+            }
+        }
+    }
+
+    &:not(.minimal) {
+        .content {
+            min-height: "calc(100vh - %s - %s)" % (appBarHeight footerHeight);
+            width: 91.6667%;
+            margin-left: auto;
+            margin-right: auto;
+
+            .content-title {
+                margin: 4rem 0;
+            }
+        }
+    }
+}
+
+.sticked-toolbar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+p.error, .error {
+    color: #d50000;
+    margin: 24px 0;
+
+    &.dialog {
+        margin: 24px 0 0 0;
+    }
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.center-children {
+    display:flex;
+    justify-content: center;
+}
+
+.align-children {
+    display:flex;
+    align-items: center;
+}
+
+footer#footer
+{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    text-align:center; 
+        
+    > div
+    {
+        border-top: 1px solid #bbb;
+        padding: 3rem containerPadding;
+        background: #313138;
+        color: #ddd;
+        
+        a
+        {
+            color: #ddd;
+            text-decoration: none;
+            border-bottom: 1px dotted #ddd;
+            
+            &:hover
+            {
+                border-bottom-style: solid;
+            }
+        }
+        
+        p
+        {
+            margin: 2.5rem;
+        }
+    }
+}
+
+p.underline {
+    padding-bottom:5px;
+    border-bottom: 2px dashed #354b72;
+    margin-bottom:40px;
+
+    &:last-child {
+    }
+
+    > span {
+        float: right;
+    } 
+}

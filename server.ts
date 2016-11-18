@@ -1,145 +1,95 @@
-/// <reference path="./typings/typings.d.ts" />
+import * as path from "path";
+import * as express from "express";
+import { BoomError, wrap } from "boom";
+import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 
-import * as Hapi from "hapi";
-import * as joi from "joi";
-import * as boom from "boom";
-import * as path from "path"; 
-import * as util from "util";
-import {promisify} from "bluebird";
-import * as config from "./modules/config";
-import {RoutesToRegister} from "./routes/index";
-import {defaults, isError, merge} from "lodash";
-import {Server, ServerApp, DefaultContext} from "gearworks";
-import {IProps as ErrorPageProps} from "./views/errors/error";
-import {DefaultTTL, CacheName, registerCaches} from "./modules/cache";
-import {configureAuth} from "./modules/auth";
+// Server configurations
+import configureDatabase from "./modules/database";
+import configureCache from "./modules/cache";
+import configureRoutes from "./routes";
 
-//Prepare Hapi server
-const server: Server = new Hapi.Server() as Server;
-const serverConfig: Hapi.IServerConnectionOptions = {
-    port: config.Port || 3000,
-    host: config.Host || "localhost",
-    router: {
-        isCaseSensitive: false,
-        stripTrailingSlash: true
-    }
-};
-const connection = server.connection(serverConfig);
+const app = express();
 
-async function registerPlugins()
-{
-    //Inert gives Hapi static file and directory handling via reply.file and reply.directory.
-    await server.register(require("inert"));
-    
-    //Vision gives Hapi dynamic view rendering.
-    await server.register(require("vision"));
-    
-    //Adds async support to Hapi route handlers.
-    await server.register(require("hapi-async-handler"));
+async function startServer() {
+    app.use((req, res, next) => {
+        res.setHeader("x-powered-by", `Gearworks https://github.com/nozzlegear/gearworks`);
 
-    //Crumb gives Hapi automatic CSRF protection.
-    await server.register(require("crumb"));
-    
-    //Yar is a cookie management plugin for Hapi.
-    await server.register({
-        register: require("yar"),
-        options: {
-            storeBlank: false,
-            cookieOptions: {
-                password: config.YarSalt,
-                isSecure: server.app.isLive,
-                ttl: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-                ignoreErrors: true, //tells Hapi that it should not respond with a HTTP 400 error if the session cookie cannot decrypt
-                clearInvalid: true  //tells Hapi that if a session cookie is invalid for any reason, to clear it from the browser.
-            }
-        }
-    })
-    
-    await registerCaches(server);
-}
-
-async function startServer()
-{
-    //Validate environment variables
-    Object.getOwnPropertyNames(config).forEach((prop, index, propNames) =>
-    {
-        // Ensure config prop isn't optional
-        if (config.OptionalProps.indexOf(prop) === -1 && !config[prop])
-        {
-            throw new Error(`Configuration property ${prop} cannot be null or empty. Check modules/config.ts to find the correct environment variable key for ${prop}.`);
-        }
-    })
-    
-    //Configure the server's app state
-    server.app = {
-        appName: config.AppName,
-        isLive: process.env.NODE_ENV === "production",
-        rootDir: path.resolve(__dirname),
-    };
-    
-    await registerPlugins();
-    
-    //Configure authentication. Must be done before configuring routes
-    configureAuth(server);
-    
-    //Set the viewengine to use react
-    server.views({
-        engines: {
-            js: require("hapi-react-views")
-        },
-        compileOptions: {},
-        relativeTo: server.app.rootDir,
-        path: "views",
-        context: {
-            appName: server.app.appName,
-            isLive: server.app.isLive,
-        } as DefaultContext
+        next();
     });
-    
-    //Filter all responses to check if they have an error. If so, render the error page.
-    server.ext("onPreResponse", (request, reply) =>
-    {
-        const resp = request.response;
-        
-        if (request.response.isBoom || isError(request.response))
-        {
-            const resp: Boom.BoomError = request.response as any;
-            const payload: { error: string, message: string, statusCode: number } = resp.output.payload;
-            const props: ErrorPageProps = {
-                errorType: payload.error,
-                message: payload.message,
-                statusCode: payload.statusCode,
-                title: payload.error,
-            };
-            
-            console.log(`${payload.statusCode} ${payload.error} for ${request.url.pathname}. ${resp.message}.`, payload.statusCode >= 500 ? util.inspect(resp) : "");
 
-            return (reply.view("errors/error.js", props)).code(payload.statusCode);
+    if (process.argv.some(arg => arg === "--dev")) {
+        // Create a webpack dev server
+        const config = require(path.resolve(__dirname, "..", "webpack.config"));
+        const webpack = require("webpack");
+        const compiler = webpack(config);
+
+        app.use(require('webpack-dev-middleware')(compiler, {
+            publicPath: config.output.publicPath,
+            noInfo: true,
+            watchOptions: {
+                poll: true
+            },
+            stats: {
+                colors: true
+            }
+        }));
+
+        app.use(require('webpack-hot-middleware')(compiler));
+    } else {
+        // Any request to the /dist path should server a static file from the dist folder.
+        app.use("/dist", express.static("dist"));
+    }
+
+    // Let express trust the proxy that may be used on certain hosts (e.g. Azure and other cloud hosts). 
+    // Enabling this will replace the `request.protocol` with the protocol that was requested by the end user, 
+    // rather than the internal protocol used by the proxy.
+    app.enable("trust proxy");
+
+    // Set up request body parsers
+    app.use(parseJson());
+    app.use(parseUrlEncoded({ extended: true }));
+
+    // Configure the server
+    await configureCache();
+    await configureDatabase();
+    await configureRoutes(app);
+
+    // Wildcard route must be registered after all other routes.
+    app.get("*", (req, res) => {
+        if (res.finished) {
+            return;
         }
 
-        request.response.header("X-POWERED-BY", "Gearworks https://github.com/nozzlegear/gearworks");
-        
-        return reply.continue();
-    });    
-    
-    //Register all app routes.
-    RoutesToRegister.forEach((register) => register(server));
-    
-    return server.start((error) =>
-    {
-        if (error)
-        {
-            throw error;
-        }
-        
-        console.log(`${server.app.isLive ? "Live" : "Development"} server running at ${server.info.uri}`);
+        res.sendFile(path.join(__dirname, "..", "index.html"));
     })
+
+    // Typescript type guard for boom errors
+    function isBoomError(err): err is BoomError {
+        return err.isBoom;
+    }
+
+    // Register an error handler for all routes
+    app.use(function (err: Error | BoomError, req: express.Request, res: express.Response, next: Function) {
+        const fullError = isBoomError(err) ? err : wrap(err);
+
+        if (fullError.output.statusCode >= 500) {
+            console.log(`Error in ${req.url}`, err);
+        }
+
+        res.status(fullError.output.statusCode).json(fullError.output.payload);
+
+        return next();
+    } as any);
 }
 
-//Start the server
-startServer().catch((err) =>
-{
-    console.log("Hapi server registration error.", err);
-    
-    throw err;
+startServer().then(() => {
+    // Start the server
+    const port = process.env.PORT || 3000;
+    const host = process.env.HOST || "localhost";
+
+    app.listen(port, host, () => {
+        console.log(`Server listening on ${host}:${port}`);
+    })
+}).catch(e => {
+    console.error("Error starting server.", e);
 });

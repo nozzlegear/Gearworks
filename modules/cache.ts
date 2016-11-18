@@ -1,58 +1,49 @@
-/// <reference path="./../typings/typings.d.ts" />
+import * as Bluebird from "bluebird";
+import { COUCHDB_URL } from "./constants"; 
+import { Client, CachePolicy, CachedItem, CacheClient } from "catbox";
+const CatboxMemory = require("catbox-memory");
 
-import * as Promise from "bluebird";
-import {DatabaseUrl} from "./config";
-import {Server, CacheConfig} from "gearworks";
-import {Client, CachePolicy, CachedItem} from "catbox";
-
-export const CacheName = "catbox-couchbase";
 export const DefaultTTL = 60 * 60 * 1000; //60 minutes in milliseconds
 
-/**
- * A collection of caches used throughout the app.
- */
-export const Caches: {userAuth: CacheConfig} = {
-    /**
-     * A cache for storing user data used during auth checks.
-     */
-    userAuth: {
-        segment: "user_auth_data",
-        client: undefined,
-        defaultTTL: DefaultTTL,
-    }
+export type CacheNames = "users";
+
+const Caches: {[index: string]: CacheClient} = {
+    users: undefined as CacheClient
 }
 
 /**
- * Registers caches on the server and makes them available on the Caches object.
+ * Registers server caches.
  */
-export async function registerCaches(server: Server)
-{
-    Caches.userAuth.client = new Client(require("catbox-memory"), undefined);
-    Caches.userAuth.client.start(async (error) =>
-    {
-        if (error)
-        {
-            console.error("Error starting cache client", error);
-            
-            throw error;
-        }
-    })
+export default async function registerCaches() {
+    Object.getOwnPropertyNames(Caches).forEach(cacheName => {
+        const client = Caches[cacheName] = new Client(CatboxMemory, {});
+
+        client.start(async (error) => {
+            if (error) {
+                console.error("Error starting cache client", error);
+
+                throw error;
+            }
+        })
+    });
 }
 
 /**
  * A promised function for getting a value from a catbox cache.
  */
-export function getCacheValue<T>(cache: CacheConfig, key: string)
-{
-    return new Promise<CachedItem<T>>((resolve, reject) =>
-    {
-        cache.client.get<T>({id: key, segment: cache.segment}, (error, value) =>
-        {
-            if (error)
-            { 
-                return reject (error);
+export function getCacheValue<T>(cacheName: CacheNames, key: string) {
+    return new Promise<CachedItem<T>>((resolve, reject) => {
+        const client = Caches[cacheName];
+
+        if (!client) {
+            throw new Error(`Cache ${cacheName} does not exist or is not initialized.`);
+        }
+
+        client.get<T>({ id: key }, (error, value) => {
+            if (error) {
+                return reject(error);
             }
-            
+
             return resolve(value);
         })
     })
@@ -61,18 +52,20 @@ export function getCacheValue<T>(cache: CacheConfig, key: string)
 /**
  * A promised function for setting a value in a catbox cache.
  */
-export function setCacheValue<T>(cache: CacheConfig, key: string, value: T)
-{
-    return new Promise<void>((resolve, reject) =>
-    {
-        cache.client.set({id: key, segment: cache.segment}, value, cache.defaultTTL, (error) =>
-        {
-            if (error)
-            {
-                reject(error);
+export function setCacheValue<T>(cacheName: CacheNames, key: string, value: T, ttl: number = DefaultTTL) {
+    return new Promise<void>((resolve, reject) => {
+        const client = Caches[cacheName];
+
+        if (!client) {
+            throw new Error(`Cache ${cacheName} does not exist or is not initialized.`);
+        }
+
+        client.set({ id: key }, value, ttl, (error) => {
+            if (error) {
+                return reject(error);
             }
-            
-            resolve(undefined);
+
+            return resolve(undefined);
         })
     })
 }
@@ -80,18 +73,20 @@ export function setCacheValue<T>(cache: CacheConfig, key: string, value: T)
 /**
  * A promised function for deleting a value in a catbox cache.
  */
-export function deleteCacheValue<T>(cache: CacheConfig, key: string)
-{
-    return new Promise<void>((resolve, reject) =>
-    {
-        cache.client.drop({id: key, segment: cache.segment}, (error) =>
-        {
-            if (error)
-            {
-                reject(error);
+export function deleteCacheValue<T>(cacheName: CacheNames, key: string) {
+    return new Promise<void>((resolve, reject) => {
+        const client = Caches[cacheName];
+
+        if (!client) {
+            throw new Error(`Cache ${cacheName} does not exist or is not initialized.`);
+        }
+
+        client.drop({ id: key }, (error) => {
+            if (error) {
+                return reject(error);
             }
-            
-            resolve(undefined);
+
+            return resolve(undefined);
         });
     })
 }

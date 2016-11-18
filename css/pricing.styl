@@ -1,0 +1,78 @@
+section#plans
+{
+    .plan
+    {
+        text-align: center;
+        
+        .plan-header
+        {
+            display:flex;
+            flex-direction: column;
+            background-color: #388E3C;
+            
+            &.plan-index-1
+            {
+                background-color: #0288D1;
+            }
+            
+            &.plan-index-2
+            {
+                background-color: #d32f2f;
+            }
+            
+            &.plan-index-3
+            {
+                background-color: #512DA8;
+            }
+            
+            h3.plan-title
+            {
+                flex: 1;
+                color: #fff;
+                font-size: 2.75rem;
+                margin: 0;
+                padding: 4rem 0;
+            }
+            
+            h5.plan-pricing
+            {
+                color: #fff;
+                margin: 0;
+                padding: 1.35rem;
+                background-color: rgba(0, 0, 0, .15);
+                font-size: 1.5rem;
+            }
+        }
+        
+        .plan-features
+        {
+            border: 1px solid #ddd;
+            border-top: none;
+            padding: 0 1.5rem;
+            
+            > div.plan-command {
+                display: block;
+                margin: 2.5rem auto;
+            }
+            
+            > ul 
+            {
+                list-style-type:none;
+                margin: 0;
+                padding: 0;
+                padding-top: 2.5rem;
+                
+                > li
+                {
+                    display: block;
+                    padding: 1.5rem 0;
+                    border-bottom: 1px solid #ddd;
+                    
+                    &:first-child {
+                        padding-top: 0;
+                    }
+                }
+            }
+        }
+    }
+}
