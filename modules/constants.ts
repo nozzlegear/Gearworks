@@ -1,6 +1,9 @@
 import { resolve } from "path";
 import { Enums } from "shopify-prime";
 
+// NODE_ENV is injected by webpack for the browser client.
+declare const NODE_ENV: string;
+
 const env = process && process.env || {};
 let isBrowser = true;
 
@@ -10,7 +13,7 @@ if (typeof process === 'object' && process + '' === '[object process]') {
 
 export const COUCHDB_URL = env.GEARWORKS_COUCHDB_URL || env.COUCHDB_URL || "http://localhost:5984";
 
-export const ISLIVE = env.NODE_ENV === "production";
+export const ISLIVE = env.NODE_ENV === "production" || (isBrowser && NODE_ENV === "production");
 
 export const AUTH_HEADER_NAME = "x-gearworks-token";
 

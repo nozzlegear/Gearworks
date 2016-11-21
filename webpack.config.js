@@ -41,7 +41,7 @@ const config = {
         new webpack.optimize.OccurenceOrderPlugin(),
         new webpack.DefinePlugin({
             "_VERSION": `"${pkg.version}"`,
-            "NODE_ENV": process.env.NODE_ENV || "development",
+            "NODE_ENV": `"${process.env.NODE_ENV}"` || `"development"`,
         })
     ].filter(arg => !!arg),
     module: {
