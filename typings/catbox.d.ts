@@ -125,7 +125,7 @@ declare module "catbox" {
     export interface CacheKey {
         id: string;
 
-        segment?: string;
+        segment: string;
     }
 
     export interface CacheOptions {

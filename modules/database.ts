@@ -54,7 +54,7 @@ export default async function configureDatabases() {
 
             if (!result.ok) {
                 const body = await result.text();
-                
+
                 throw new Error(`${result.status} ${result.statusText} ${body}`);
             }
         } catch (e) {
@@ -71,7 +71,9 @@ function prepDatabase<T extends CouchDoc>(name: string) {
         if (!result.ok) {
             const message = `Error ${action} document(s) for CouchDB database ${name} at ${result.url}. ${result.status} ${result.statusText}`;
 
-            console.error(message, body)
+            if (result.status !== 404) {
+                console.error(message, body)
+            }
 
             throw wrap(new Error(message), result.status, message);
         }
@@ -98,7 +100,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             return body.docs;
         },
         list: async function (options = {}) {
-            const query = qs(Object.assign({include_docs: true}, options));
+            const query = qs(Object.assign({ include_docs: true }, options));
             const url = databaseUrl + (options.view ? `_design/list/_view/${options.view}` : `_all_docs`);
             const result = await fetch(`${url}?${query}`, {
                 method: "GET",
@@ -138,10 +140,10 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             const body: CouchResponse = await checkErrorAndGetBody(result, "posting");
 
             // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
-            return Object.assign({}, data, {_id: body.id, _rev: body.rev}); 
+            return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
         put: async function (data, rev?) {
-            const result = await fetch(databaseUrl + data._id + `?${qs({rev})}`, {
+            const result = await fetch(databaseUrl + data._id + `?${qs({ rev })}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -152,23 +154,23 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             const body: CouchResponse = await checkErrorAndGetBody(result, "putting");
 
             // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
-            return Object.assign({}, data, {_id: body.id, _rev: body.rev}); 
+            return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
         copy: async function (data, newId) {
             const result = await fetch(databaseUrl + data._id, {
                 method: "COPY",
                 headers: {
-                    Destination: newId  
+                    Destination: newId
                 },
             })
 
             const body: CouchResponse = await checkErrorAndGetBody(result, "copying");
 
             // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
-            return Object.assign({}, data, {_id: body.id, _rev: body.rev});
+            return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
         delete: async function (id, rev) {
-            const result = await fetch(databaseUrl + id + `?${qs({rev})}`, {
+            const result = await fetch(databaseUrl + id + `?${qs({ rev })}`, {
                 method: "DELETE",
             });
 

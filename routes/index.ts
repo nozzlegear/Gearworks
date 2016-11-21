@@ -2,8 +2,9 @@ import { Auth } from "shopify-prime";
 import * as Bluebird from "bluebird";
 import { Schema, validate } from "joi";
 import { decode, encode } from "jwt-simple";
-import { badData, unauthorized, forbidden } from "boom";
+import { getCacheValue } from "../modules/cache";
 import { seal, unseal } from "../modules/encryption";
+import { badData, unauthorized, forbidden } from "boom";
 import { Express, Request, Response, NextFunction } from "express";
 import { AUTH_HEADER_NAME, JWT_SECRET_KEY, SEALABLE_USER_PROPERTIES, SHOPIFY_SECRET_KEY } from "../modules/constants";
 import { RouterResponse, RouterFunction, RouterRequest, User, SessionToken, WithSessionTokenFunction } from "gearworks";
@@ -57,12 +58,23 @@ export default async function registerAllRoutes(app: Express) {
 
             if (config.requireAuth) {
                 const header = req.header(AUTH_HEADER_NAME);
-                let user: any;
+                let user: User;
 
                 try {
                     user = decode(header, JWT_SECRET_KEY);
                 } catch (e) {
                     return next(unauthorized(`Missing or invalid ${AUTH_HEADER_NAME} header.`));
+                }
+
+                // If user id exists in invalidation cache, return a 401 unauthed response.
+                try {
+                    const cacheValue = await getCacheValue("auth-invalidation", user._id);
+
+                    if (!!cacheValue) {
+                        return next(unauthorized(`Server cache indicates that user must reauthenticate.`));
+                    }
+                } catch (e) {
+                    console.error(`Error attempting to retrieve ${user._id} value from auth-invalidation cache.`, e);
                 }
 
                 // Decrypt sensitive Iron-sealed properties

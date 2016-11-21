@@ -3,7 +3,7 @@ import * as boom from "boom";
 import { Express } from "express";
 import { RouterFunction, User } from "gearworks";
 import { users } from "./../../modules/database";
-import { deleteCacheValue } from "../../modules/cache";
+import { setCacheValue } from "../../modules/cache";
 
 export const BASE_PATH = "/api/v1/webhooks/";
 
@@ -42,15 +42,28 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             const update = await users.put(user, user._rev);
 
-            // Delete the user's data from the auth cache to force their next request to query the database.
+            // Add the user's id to the auth-invalidation cache, forcing their next request to prompt them to login again.
             try {
-                await deleteCacheValue("users", user._id);
+                await setCacheValue("auth-invalidation", user._id, true, 21 * 1000 * 60 * 60 * 24 /* 21 days in milliseconds */);
             }
             catch (e) {
                 console.error("Failed to delete user data from auth cache after handling app/uninstalled webhook.", e);
             }
 
-            res.status(200);
+            res.json({});
+
+            return next();
+        }
+    })
+
+    route({
+        method: "post",
+        path: BASE_PATH + "test/cache",
+        requireAuth: false,
+        handler: async function (req, res, next) {
+            await setCacheValue("auth-invalidation", "nozzlegear@outlook.com", true, 21 * 1000 * 60 * 60 * 24);
+
+            res.json({});
 
             return next();
         }
