@@ -55,17 +55,4 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             return next();
         }
     })
-
-    route({
-        method: "post",
-        path: BASE_PATH + "test/cache",
-        requireAuth: false,
-        handler: async function (req, res, next) {
-            await setCacheValue("auth-invalidation", "nozzlegear@outlook.com", true, 21 * 1000 * 60 * 60 * 24);
-
-            res.json({});
-
-            return next();
-        }
-    })
 }
