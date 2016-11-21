@@ -1,6 +1,10 @@
 import * as path from "path";
+import * as http from "http";
+import * as https from "https";
 import * as express from "express";
 import { BoomError, wrap } from "boom";
+import * as letsEncrypt from "letsencrypt-express";
+import { ISLIVE, EMAIL_DOMAIN } from "./modules/constants";
 import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 
 // Server configurations
@@ -10,7 +14,7 @@ import configureRoutes from "./routes";
 
 const app = express();
 
-async function startServer() {
+async function startServer(hostname: string, port: number, securePort: number) {
     app.use((req, res, next) => {
         res.setHeader("x-powered-by", `Gearworks https://github.com/nozzlegear/gearworks`);
 
@@ -80,16 +84,36 @@ async function startServer() {
 
         return next();
     } as any);
+
+    // Prepare encryption
+    const lex = letsEncrypt.create({
+        // You must set server to https://acme-v01.api.letsencrypt.org/directory after you have tested that your setup works.
+        server: 'staging',
+        approveDomains: (options, certs, cb) => {
+            options.domains = certs && certs.altnames || options.domains;
+            options.email = `support@${EMAIL_DOMAIN}`;
+            options.agreeTos = true;
+
+            if (options.domains.some(domain => domain === "localhost")) {
+                return cb(new Error("Let's Encrypt cannot be used on localhost."));
+            }
+
+            cb(null, { options, certs });
+        },
+    });
+
+    return {
+        http: http.createServer(app).listen(port, hostname),
+        https: https.createServer(lex.httpsOptions, lex.middleware(app)).listen(securePort, hostname),
+    };
 }
 
-startServer().then(() => {
-    // Start the server
-    const port = process.env.PORT || 3000;
-    const host = process.env.HOST || "localhost";
+const host = process.env.HOST || "127.0.0.1";
+const port = process.env.PORT || 3000;
+const securePort = process.env.SECURE_PORT || 3001;
 
-    app.listen(port, host, () => {
-        console.log(`Server listening on ${host}:${port}`);
-    })
+startServer(host, port, securePort).then((servers: { http: http.Server, https: https.Server }) => {
+    console.log(`HTTP and HTTPS servers are listening on ${host}:${port} and ${host}:${securePort}.`);
 }).catch(e => {
     console.error("Error starting server.", e);
 });
