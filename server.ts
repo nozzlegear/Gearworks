@@ -1,8 +1,11 @@
+import * as os from "os";
 import * as path from "path";
 import * as http from "http";
 import * as https from "https";
 import * as express from "express";
 import { BoomError, wrap } from "boom";
+import inspect from "./modules/inspect";
+import * as httpsRedirect from "redirect-https";
 import * as letsEncrypt from "letsencrypt-express";
 import { ISLIVE, EMAIL_DOMAIN } from "./modules/constants";
 import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
@@ -12,9 +15,10 @@ import configureDatabase from "./modules/database";
 import configureCache from "./modules/cache";
 import configureRoutes from "./routes";
 
-const app = express();
 
 async function startServer(hostname: string, port: number, securePort: number) {
+    const app = express();
+
     app.use((req, res, next) => {
         res.setHeader("x-powered-by", `Gearworks https://github.com/nozzlegear/gearworks`);
 
@@ -77,7 +81,7 @@ async function startServer(hostname: string, port: number, securePort: number) {
         const fullError = isBoomError(err) ? err : wrap(err);
 
         if (fullError.output.statusCode >= 500) {
-            console.log(`Error in ${req.url}`, err);
+            inspect(`Error in ${req.url}`, err);
         }
 
         res.status(fullError.output.statusCode).json(fullError.output.payload);
@@ -86,24 +90,35 @@ async function startServer(hostname: string, port: number, securePort: number) {
     } as any);
 
     // Prepare encryption
+    const lexTempDir = path.join(os.tmpdir(), "acme-challenges");
     const lex = letsEncrypt.create({
         // You must set server to https://acme-v01.api.letsencrypt.org/directory after you have tested that your setup works.
-        server: 'staging',
-        approveDomains: (options, certs, cb) => {
-            options.domains = certs && certs.altnames || options.domains;
+        server: (!ISLIVE || true) ? "staging" : "https://acme-v01.api.letsencrypt.org/directory",
+        challenges: { 'tls-sni-01': require('le-challenge-sni').create({ webrootPath: lexTempDir }) },
+        challengeType: 'tls-sni-01',
+        store: require('le-store-certbot').create({ webrootPath: lexTempDir }),
+        approveDomains: (options: { email: string, agreeTos: boolean, domains: string[] }, certs, cb) => {
             options.email = `support@${EMAIL_DOMAIN}`;
             options.agreeTos = true;
+            options.domains = (certs && certs.altnames) || options.domains;
 
-            if (options.domains.some(domain => domain === "localhost")) {
-                return cb(new Error("Let's Encrypt cannot be used on localhost."));
-            }
+            // TODO: Uncomment the next block to ensure certificates are only approved for your own domain. 
+            // if (!options.domains.every(domain => domain.toLowerCase().indexOf(EMAIL_DOMAIN.toLowerCase()) >= 0)) {
+            //     const msg = `Attempted to approve a domain that wasn't ${EMAIL_DOMAIN} or a subdomain thereof.`;
+
+            //     inspect(msg, options.domains);
+
+            //     return cb(new Error(msg));
+            // }
 
             cb(null, { options, certs });
         },
+        email: `support@${EMAIL_DOMAIN}`,
+        agreeTos: true,
     });
 
     return {
-        http: http.createServer(app).listen(port, hostname),
+        http: http.createServer(ISLIVE ? httpsRedirect() : app).listen(port, hostname),
         https: https.createServer(lex.httpsOptions, lex.middleware(app)).listen(securePort, hostname),
     };
 }

@@ -21,7 +21,7 @@ export const JWT_SECRET_KEY = env.GEARWORKS_JWT_SECRET_KEY || env.JWT_SECRET_KEY
 
 export const IRON_PASSWORD = env.GEARWORKS_IRON_PASSWORD || env.IRON_PASSWORD;
 
-export const EMAIL_DOMAIN = env.GEARWORKS_EMAIL_DOMAIN || env.EMAIL_DOMAIN;
+export const EMAIL_DOMAIN: string = env.GEARWORKS_EMAIL_DOMAIN || env.EMAIL_DOMAIN;
 
 export const APP_NAME = env.GEARWORKS_APP_NAME || env.APP_NAME || "Gearworks";
 
