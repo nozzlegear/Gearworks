@@ -40,7 +40,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.shopify_shop_id = undefined;
             user.shopify_shop_name = undefined;
 
-            const update = await users.put(user, user._rev);
+            const update = await users.put(user._id, user, user._rev);
 
             // Add the user's id to the auth-invalidation cache, forcing their next request to prompt them to login again.
             try {

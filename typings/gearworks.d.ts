@@ -55,10 +55,10 @@ declare module "gearworks" {
         count: () => Promise<number>;
         get: (id: string, rev?: string) => Promise<T>;
         post: (data: T) => Promise<T>;
-        put: (data: T, rev?: string) => Promise<CouchResponse>;
+        put: (id: string, data: T, rev: string) => Promise<CouchResponse>;
         delete: (id: string, rev: string) => Promise<void>;
         find: (selector: FindSelector) => Promise<T[]>;
-        copy: (data: T, newId: string) => Promise<T>;
+        copy: (id: string, data: T, newId: string) => Promise<T>;
         exists: (id: string) => Promise<boolean>;
     }
 

@@ -72,7 +72,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             try {
                 // CouchDB does not allow modifying a doc's id, so we copy the user to a new document instead.
-                user = await users.copy(user, model.username.toLowerCase());
+                user = await users.copy(_id, user, model.username.toLowerCase());
             } catch (e) {
                 console.error("Failed to copy user model to new id.", e);
 
@@ -165,7 +165,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             let user = await users.get(token.username.toLowerCase());
             user.hashed_password = hashSync(payload.new_password);
-            user = await users.put(user);
+            user = await users.put(user._id, user, user._rev);
 
             res.json({});
 
@@ -194,7 +194,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.hashed_password = hashSync(payload.new_password);
 
             try {
-                user = await users.put(user);
+                user = await users.put(user._id, user, user._rev);
             } catch (e) {
                 console.error("Failed to update user's password.", e);
 
@@ -280,7 +280,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.charge_id = charge.id;
 
             try {
-                user = await users.put(user);
+                user = await users.put(user._id, user, user._rev);
             } catch (e) {
                 console.error(`Activated new subscription plan but failed to update user ${req.user._id} plan id.`, e);
 

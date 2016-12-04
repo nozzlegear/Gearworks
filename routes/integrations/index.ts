@@ -77,7 +77,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             }
 
             try {
-                user = await users.put(user);
+                user = await users.put(user._id, user, user._rev);
             } catch (e) {
                 console.error(`Failed to update user ${user._id}'s Shopify access token`, e);
 
