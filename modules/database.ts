@@ -234,6 +234,10 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
         put: async function (id: string, data, rev: string) {
+            if (!rev) {
+                console.warn(`Warning: no revision specified for CouchDB .put function with id ${id}. This may cause a document conflict error.`);
+            }
+
             const result = await fetch(databaseUrl + id + `?${qs({ rev })}`, {
                 method: "PUT",
                 headers: {
@@ -261,6 +265,10 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
         delete: async function (id, rev) {
+            if (!rev) {
+                console.warn(`Warning: no revision specified for CouchDB .delete function with id ${id}. This may cause a document conflict error.`);
+            }
+
             const result = await fetch(databaseUrl + id + `?${qs({ rev })}`, {
                 method: "DELETE",
             });
