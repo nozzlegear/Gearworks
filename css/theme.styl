@@ -37,6 +37,10 @@ a {
     }
 }
 
+.color {
+    color: #526273;
+}
+
 .info-line {
     text-align: center;
     color: #FFF;
@@ -52,7 +56,7 @@ a {
 }
 
 main#app{
-    height:100vh;
+    min-height:100%;
 
     &.minimal{
         background: #354b72;
@@ -62,15 +66,25 @@ main#app{
             margin:0;
             border:0;
 
-            > a {
+            > a, > h1 {
                 display:block;
                 padding: 6.5rem 0;
+                margin: 0;
                 text-align: center;
                 color: #fff;
                 font-size: 31px;
                 font-family: "Lato", "Helvetica Neue", Arial;
                 text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);
                 transition: color 0.25s linear;
+            }
+
+            a {
+                text-decoration: none;
+                color: #fff;
+
+                &:focus, &:hover {
+                    text-decoration: none;
+                }
             }
         }
     }
@@ -102,28 +116,6 @@ p.error, .error {
     &.dialog {
         margin: 24px 0 0 0;
     }
-}
-
-.text-center {
-    text-align: center;
-}
-
-.text-right {
-    text-align: right;
-}
-
-.text-left {
-    text-align: left;
-}
-
-.center-children {
-    display:flex;
-    justify-content: center;
-}
-
-.align-children {
-    display:flex;
-    align-items: center;
 }
 
 footer#footer
@@ -160,7 +152,7 @@ footer#footer
     }
 }
 
-p.underline {
+p.underline, .underline {
     padding-bottom:5px;
     border-bottom: 2px dashed #354b72;
     margin-bottom:40px;
@@ -169,6 +161,7 @@ p.underline {
     }
 
     > span {
+        
         float: right;
     } 
 }

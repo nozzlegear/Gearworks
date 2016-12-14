@@ -142,7 +142,7 @@ export default class AuthPage extends Router<IProps, IState> {
         return (
             <section id="login">
                 <div className="pure-g center-children">
-                    <div className="pure-u-12-24">
+                    <div className="pure-u-1-1 pure-u-md-12-24">
                         <Box title="Sign in to your account." error={error} footer={footer}>
                             <div className="form-group">
                                 <TextField

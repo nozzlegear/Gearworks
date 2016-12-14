@@ -1,6 +1,6 @@
 import * as React from "react";
 
-require("./css/box.styl");
+require("css/box.styl");
 
 export interface IProps extends React.Props<any> {
     title: string;

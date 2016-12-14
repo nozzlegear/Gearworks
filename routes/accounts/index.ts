@@ -1,7 +1,6 @@
 import * as joi from "joi";
 import * as boom from "boom";
 import { Express } from "express";
-import Plans from "../../modules/plans";
 import { createTransport } from "nodemailer";
 import { RouterFunction, User } from "gearworks";
 import { users } from "./../../modules/database";
@@ -72,7 +71,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             try {
                 // CouchDB does not allow modifying a doc's id, so we copy the user to a new document instead.
-                user = await users.copy(user, model.username.toLowerCase());
+                user = await users.copy(_id, user, model.username.toLowerCase());
             } catch (e) {
                 console.error("Failed to copy user model to new id.", e);
 
@@ -165,7 +164,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             let user = await users.get(token.username.toLowerCase());
             user.hashed_password = hashSync(payload.new_password);
-            user = await users.put(user);
+            user = await users.put(user._id, user, user._rev);
 
             res.json({});
 
@@ -194,95 +193,9 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.hashed_password = hashSync(payload.new_password);
 
             try {
-                user = await users.put(user);
+                user = await users.put(user._id, user, user._rev);
             } catch (e) {
                 console.error("Failed to update user's password.", e);
-
-                return next(e);
-            }
-
-            await res.withSessionToken(user);
-
-            return next();
-        }
-    })
-
-    route({
-        method: "post",
-        path: BASE_PATH + "plan",
-        requireAuth: true,
-        bodyValidation: joi.object({
-            plan_id: joi.string().only(Plans.map(p => p.id)).required(),
-        }),
-        handler: async function (req, res, next) {
-            if (!req.user.charge_id) {
-                return next(boom.notAcceptable(`User must have a current subscription charge before plan can be changed.`));
-            }
-
-            const model = req.validatedBody as { plan_id: string };
-            const plan = Plans.find(p => p.id === model.plan_id);
-            const service = new RecurringCharges(req.user.shopify_domain, req.user.shopify_access_token);
-
-            // Get the user's current charge so we can transfer their trial days 
-            const currentCharge = await service.get(req.user.charge_id, { fields: "trial_ends_on" });
-
-            // Figure out the new trial length by checking if current charge's trial_ends_on hasn't happened yet (Today < Tomorrow)
-            const trialDays = Math.round((new Date(currentCharge.trial_ends_on).valueOf() - new Date().valueOf()) / 1000 / 60 / 60 / 24);
-
-            // The new charge will replace the user's current charge on activation.
-            const charge = await service.create({
-                name: plan.name,
-                price: plan.price,
-                test: !ISLIVE,
-                trial_days: trialDays > 0 ? trialDays : 0,
-                return_url: `${req.domainWithProtocol}/shopify/activate-charge?plan_id=${plan.id}`.toLowerCase(),
-            });
-
-            res.json(charge);
-
-            return next();
-        }
-    })
-
-    route({
-        method: "put",
-        path: BASE_PATH + "plan",
-        requireAuth: true,
-        bodyValidation: joi.object({
-            plan_id: joi.string().only(Plans.map(p => p.id)).required(),
-            charge_id: joi.any().required(),
-        }),
-        handler: async function (req, res, next) {
-            const model = req.validatedBody as { plan_id: string, charge_id: number };
-            const plan = Plans.find(p => p.id === model.plan_id);
-            const service = new RecurringCharges(req.user.shopify_domain, req.user.shopify_access_token);
-            let charge: Models.RecurringCharge;
-
-            try {
-                charge = await service.get(model.charge_id);
-
-                //Charges can only be activated when they've been accepted
-                if (charge.status !== "accepted") {
-                    return next(boom.expectationFailed(`Charge ${model.charge_id} has not been accepted.`));
-                }
-            } catch (e) {
-                console.error("Recurring charge error", e);
-
-                // Charge has expired or was declined. Send the user to select a new plan.
-                return next(boom.expectationFailed("Could not find recurring charge. It may have expired or been declined."));
-            }
-
-            await service.activate(charge.id);
-
-            // Update the user's planid
-            let user = await users.get(req.user._id);
-            user.plan_id = plan.id;
-            user.charge_id = charge.id;
-
-            try {
-                user = await users.put(user);
-            } catch (e) {
-                console.error(`Activated new subscription plan but failed to update user ${req.user._id} plan id.`, e);
 
                 return next(e);
             }

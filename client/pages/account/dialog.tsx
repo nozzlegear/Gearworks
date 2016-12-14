@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { Plan } from "gearworks";
 import store from "../../stores/auth";
 import Router from "../../components/router";
 import { Users, ApiError, SessionTokenResponse } from "../../../modules/api";
-import { Dialog, FlatButton, RaisedButton, TextField, FontIcon } from "material-ui";
+import { Dialog, FlatButton, RaisedButton, TextField, FontIcon, SelectField, MenuItem } from "material-ui";
 
 export interface IProps extends React.Props<any> {
     open: boolean;
@@ -33,7 +34,9 @@ export default class AccountDialog extends Router<IProps, IState> {
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {}
+        let state: IState = {
+            
+        }
 
         if (!useSetState) {
             this.state = state;
@@ -138,7 +141,7 @@ export default class AccountDialog extends Router<IProps, IState> {
         return (
             <Dialog
                 open={!!open}
-                title={type === "email" ? "Update email address." : "Update password."}
+                title={type === "email" ? "Update email address." : type === "password" ? "Update password." : "Change subscription plan."}
                 modal={false}
                 actions={actions}
                 onRequestClose={buttonClicked => onRequestClose()}>

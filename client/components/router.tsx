@@ -2,6 +2,7 @@ import * as qs from "qs";
 import * as React from "react";
 import { History } from "history";
 import store from "../stores/auth";
+import * as Bluebird from "bluebird";
 import Paths from "../../modules/paths";
 
 abstract class RouterComponent<IProps, IState> extends React.Component<IProps, IState> {
@@ -34,6 +35,15 @@ abstract class RouterComponent<IProps, IState> extends React.Component<IProps, I
         }
 
         return false;
+    }
+
+    /**
+     * An awaitable implementation of React's .setState function.
+     */
+    public setStateAsync(state: IState) {
+        return new Bluebird<void>((res, rej) => {
+            this.setState(state, res);
+        })
     }
 }
 

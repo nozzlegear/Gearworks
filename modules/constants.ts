@@ -1,5 +1,7 @@
 import { resolve } from "path";
+import { snakeCase } from "lodash";
 import { Enums } from "shopify-prime";
+import { v4 as guid } from "node-uuid";
 
 // NODE_ENV is injected by webpack for the browser client.
 declare const NODE_ENV: string;
@@ -11,25 +13,32 @@ if (typeof process === 'object' && process + '' === '[object process]') {
     isBrowser = false;
 }
 
-export const COUCHDB_URL = env.GEARWORKS_COUCHDB_URL || env.COUCHDB_URL || "http://localhost:5984";
+export const APP_NAME = "Gearworks";
+
+function get(baseKey: string, defaultValue = undefined) {
+    const snakedAppName = snakeCase(APP_NAME).toUpperCase();
+    const snakedKey = snakeCase(baseKey).toUpperCase();
+
+    return env[`${snakedAppName}_${snakedKey}`] || env[`GEARWORKS_${snakedKey}`] || env[snakedKey] || defaultValue;
+}
+
+export const COUCHDB_URL = get("COUCHDB_URL", "http://localhost:5984");
+
+export const JWT_SECRET_KEY = get("JWT_SECRET_KEY");
+
+export const IRON_PASSWORD = get("IRON_PASSWORD");
+
+export const EMAIL_DOMAIN: string = get("EMAIL_DOMAIN");
+
+export const SPARKPOST_API_KEY = get("SPARKPOST_API_KEY");
+
+export const SHOPIFY_API_KEY = get("SHOPIFY_API_KEY");
+
+export const SHOPIFY_SECRET_KEY = get("SHOPIFY_SECRET_KEY");
 
 export const ISLIVE = env.NODE_ENV === "production" || (isBrowser && NODE_ENV === "production");
 
 export const AUTH_HEADER_NAME = "x-gearworks-token";
-
-export const JWT_SECRET_KEY = env.GEARWORKS_JWT_SECRET_KEY || env.JWT_SECRET_KEY;
-
-export const IRON_PASSWORD = env.GEARWORKS_IRON_PASSWORD || env.IRON_PASSWORD;
-
-export const EMAIL_DOMAIN: string = env.GEARWORKS_EMAIL_DOMAIN || env.EMAIL_DOMAIN;
-
-export const APP_NAME = env.GEARWORKS_APP_NAME || env.APP_NAME || "Gearworks";
-
-export const SPARKPOST_API_KEY = env.GEARWORKS_SPARKPOST_API_KEY || env.SPARKPOST_API_KEY;
-
-export const SHOPIFY_API_KEY = env.GEARWORKS_SHOPIFY_API_KEY || env.SHOPIFY_API_KEY;
-
-export const SHOPIFY_SECRET_KEY = env.GEARWORKS_SHOPIFY_SECRET_KEY || env.SHOPIFY_SECRET_KEY;
 
 /**
  * A list of Shopify authorization scopes that will be requested from the user during app installation.

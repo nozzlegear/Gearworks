@@ -101,7 +101,7 @@ export default class IntegratePage extends Router<IProps, IState> {
         return (
             <section id="signup">
                 <div className="pure-g center-children">
-                    <div className="pure-u-12-24">
+                    <div className="pure-u-1-1 pure-u-md-12-24">
                         <Box title={`Connect your Shopify store.`} footer={actions} error={error}>
                             <div className="form-group">
                                 <TextField

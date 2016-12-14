@@ -18,19 +18,21 @@ const path         = require("path");
 const dev          = process.argv.some(arg => arg === "--dev");
 
 const config = {
-    entry: [
-        dev ? 'webpack-hot-middleware/client' : undefined,
-        "./client/app",
-    ].filter(arg => !!arg),
+    entry: {
+        "app": [ dev ? 'webpack-hot-middleware/client' : undefined, "./client/app", ].filter(arg => !!arg),
+    },
     output: {
         path: path.join(__dirname, "dist"),
         // Important: publicPath must begin with a / but must not end with one. Else hot module replacement won't find updates.
         publicPath: "/dist", 
-        filename: "app.js",
+        filename: "[name].js",
     },
     resolve: {
         root:  process.cwd(),
         extensions: ["", ".webpack.js", ".web.js", ".ts", ".tsx", ".js", ".jsx"],
+    },
+    alias: {
+        "css": "./css"
     },
     externals: { },
     devtool: "source-map",
@@ -48,20 +50,15 @@ const config = {
         loaders: [
             { 
                 test: /\.tsx?$/i, 
-                loaders: [dev ? "react-hot" : undefined, "babel", 'awesome-typescript-loader?useCache=true'].filter(arg => !!arg),
-            },
-            {
-                loaders: [dev ? "react-hot" : undefined, "babel"].filter(arg => !!arg),
-                test: /\.jsx?$/i,
-                include: path.join(__dirname, 'client')
+                loaders: [dev ? "react-hot" : undefined, 'awesome-typescript-loader?useCache=true'].filter(arg => !!arg),
             },
             {
                 test: /\.css$/i,
-                loaders: ["style", "css", "postcss-loader"]
+                loaders: ["style", "css", "postcss"]
             },
             {
                 test: /\.styl$/i,
-                loaders: ["style", "css", "stylus"]
+                loaders: ["style", "css", "postcss", "stylus"]
             },
             {
                 test: /\.json$/i,

@@ -1,13 +1,21 @@
+import * as cors from "cors";
 import { Auth } from "shopify-prime";
 import * as Bluebird from "bluebird";
 import { Schema, validate } from "joi";
+import inspect from "../modules/inspect";
 import { decode, encode } from "jwt-simple";
 import { getCacheValue } from "../modules/cache";
 import { seal, unseal } from "../modules/encryption";
 import { badData, unauthorized, forbidden } from "boom";
 import { Express, Request, Response, NextFunction } from "express";
+import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 import { AUTH_HEADER_NAME, JWT_SECRET_KEY, SEALABLE_USER_PROPERTIES, SHOPIFY_SECRET_KEY } from "../modules/constants";
 import { RouterResponse, RouterFunction, RouterRequest, User, SessionToken, WithSessionTokenFunction } from "gearworks";
+
+// Temporary imports
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
 // Import routes to register
 import registerAccounts from "./accounts";
@@ -53,7 +61,26 @@ export default async function registerAllRoutes(app: Express) {
 
     // A custom routing function that handles authentication and body/query/param validation
     const route: RouterFunction = (config) => {
-        app[config.method.toLowerCase()](config.path, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
+        const method = config.method.toLowerCase();
+        const corsMiddleware = config.cors ? cors() : (req, res, next) => next();
+        let jsonParserMiddleware = (req, res, next) => next();
+        let formParserMiddleware = (req, res, next) => next();
+
+        if (config.cors && config.method !== "all") {
+            // Add an OPTIONS request handler for the path. All non-trivial CORS requests from browsers 
+            // send an OPTIONS preflight request.
+            app.options(config.path, cors());
+        }
+
+        // Webhook validation must read the body exactly as its sent by Shopify, which is impossible when using parser middleware.
+        // If the route requires validation a Shopify webhook, we'll skip parser middleware and parse it ourselves.
+        if (!config.validateShopifyWebhook) {
+            // Set up request body parsers
+            jsonParserMiddleware = parseJson();
+            formParserMiddleware = parseUrlEncoded({ extended: true });
+        }
+        
+        app[method](config.path, corsMiddleware, jsonParserMiddleware, formParserMiddleware, async function (req: RouterRequest, res: RouterResponse, next: NextFunction) {
             req.domainWithProtocol = `${req.protocol}://${req.hostname}` + (req.hostname === "localhost" ? ":3000" : "");
 
             if (config.requireAuth) {
@@ -140,6 +167,14 @@ export default async function registerAllRoutes(app: Express) {
             }
 
             if (config.validateShopifyWebhook) {
+                // If the body is empty, there's no way to validate the webhook.
+                if (req.headers['transfer-encoding'] === undefined && isNaN(req.headers['content-length'] as any)) {
+                    const error = forbidden("Request does not pass Shopify's webhook validation scheme.");
+                    inspect("Webhook body appears to be empty and cannot be validated. Headers:", req.headers);
+
+                    return next(error);
+                }
+
                 // To validate a webhook request, we must read the raw body as it was sent by Shopify — not the parsed body.
                 const rawBody = await new Bluebird<string>((res, rej) => {
                     let body: string = "";
@@ -154,6 +189,10 @@ export default async function registerAllRoutes(app: Express) {
                     const error = forbidden("Request does not pass Shopify's webhook validation scheme.")
 
                     return next(error);
+                }
+
+                if (req.header("content-type") === "application/json") {
+                    req.body = JSON.parse(rawBody);
                 }
             }
 

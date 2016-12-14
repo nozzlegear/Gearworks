@@ -1,0 +1,65 @@
+@import 'variables';
+
+base(prefix) {
+    .{prefix}text-center {
+        text-align: center;
+    }
+
+    .{prefix}text-right {
+        text-align: right;
+    }
+
+    .{prefix}text-left {
+        text-align: left;
+    }
+
+    .{prefix}center-children {
+        display:flex;
+        justify-content: center;
+    }
+
+    .{prefix}align-children {
+        display:flex;
+        align-items: center;
+    }
+
+    .{prefix}hidden {
+        display: none !important;
+    }
+
+    .{prefix}ellipsis {
+        overflow: hidden;
+        word-break: keep-all;
+        text-overflow: ellipsis;
+    }
+
+    .{prefix}float-right {
+        float: right;
+    }
+
+    .{prefix}float-left {
+        float: left;
+    }
+
+    .{prefix}float-none {
+        float: none;
+    }
+}
+
+base("");
+
+@media screen and (min-width: smMinWidth) {
+    base("sm-");
+}
+
+@media screen and (min-width: mdMinWidth) {
+    base("md-");
+}
+
+@media screen and (min-width: lgMinWidth) {
+    base("lg-");
+}
+
+@media screen and (min-width: xlMinWidth) {
+    base("xl-");
+}

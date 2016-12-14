@@ -1,8 +1,12 @@
 import Dialog from "./dialog";
 import * as React from 'react';
+import { Plan } from "gearworks";
 import * as gravatar from "gravatar";
 import { observer } from "mobx-react";
+import { Models } from "shopify-prime";
 import Observer from "../../components/observer";
+import { APP_NAME } from "../../../modules/constants";
+import { Shopify, ApiError } from "../../../modules/api";
 import {
     Card,
     CardHeader,
@@ -31,10 +35,14 @@ export default class AccountPage extends Observer<IProps, IState> {
 
     public state: IState = {};
 
+    private planBox: HTMLSelectElement;
+
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {}
+        let state: IState = {
+            
+        }
 
         if (!useSetState) {
             this.state = state;
@@ -47,8 +55,8 @@ export default class AccountPage extends Observer<IProps, IState> {
 
     //#endregion
 
-    public componentDidMount() {
-
+    public async componentDidMount() {
+        
     }
 
     public componentDidUpdate() {
@@ -61,24 +69,37 @@ export default class AccountPage extends Observer<IProps, IState> {
 
     public render() {
         const {emailDialogOpen, passwordDialogOpen} = this.state;
-        const props = this.props;
-        const auth = props.auth.session;
+        const auth = this.props.auth.session;
 
         return (
             <div>
                 <section id="account" className="content">
                     <h2 className="content-title">{"Your Account"}</h2>
                     <div className="pure-g">
-                        <div className="pure-u-12-24">
+                        <div className="pure-u-1-1 pure-u-md-11-24">
                             <Card>
                                 <CardHeader title={auth.shopify_shop_name} subtitle={auth._id} avatar={gravatar.url(auth._id)} />
                                 <CardText>
-                                    <p className="underline">{"Date Created:"} <span>{new Date(auth.date_created).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></p>
-                                    <p className="underline">{"Shop URL:"}<span>{auth.shopify_domain}</span></p>
+                                    <div className="underline">
+                                        <div className="pure-u-9-24">
+                                            {"Date Created:"} 
+                                        </div>
+                                        <div className="pure-u-15-24 ellipsis text-right">
+                                            {new Date(auth.date_created).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                        </div>
+                                    </div>
+                                    <div className="underline">
+                                        <div className="pure-u-8-24">
+                                            {"Shop URL:"}
+                                        </div>
+                                        <div className="pure-u-16-24 ellipsis text-right">
+                                            {auth.shopify_domain}
+                                        </div>
+                                    </div>
                                 </CardText>
                                 <CardActions>
-                                    <RaisedButton label="Change Login Email" onTouchTap={e => this.setState({ emailDialogOpen: true })} />
-                                    <RaisedButton label="Change Login Password" style={{ float: "right" }} onTouchTap={e => this.setState({ passwordDialogOpen: true })} />
+                                    <RaisedButton label="Change Login Email" style={{marginBottom: "1rem"}} onTouchTap={e => this.setState({ emailDialogOpen: true })} />
+                                    <RaisedButton label="Change Login Password" className="sm-float-right" onTouchTap={e => this.setState({ passwordDialogOpen: true })} />
                                 </CardActions>
                             </Card>
                         </div>

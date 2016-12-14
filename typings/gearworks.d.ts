@@ -20,9 +20,10 @@ declare module "gearworks" {
     }
 
     export interface RouterFunctionConfig {
-        method: "get" | "post" | "put" | "delete" | "options" | "head",
+        method: "get" | "post" | "put" | "delete" | "head" | "all",
         path: string,
         handler: (req: RouterRequest, res: RouterResponse, next: NextFunction) => void | any,
+        cors?: boolean,
         requireAuth?: boolean,
         bodyValidation?: Schema,
         queryValidation?: Schema,
@@ -37,35 +38,61 @@ declare module "gearworks" {
     //#endregion
 
     //#region Database
-
     export interface CouchDoc {
         /**
          * The object's database id.
          */
         _id?: string;
-        
+
         /**
          * The object's database revision.
          */
         _rev?: string;
     }
 
+    export interface ViewOptions extends ListOptions {
+        reduce?: boolean;
+        group?: boolean;
+        group_level?: number;
+    }
+
+    /**
+     * Options for listing database results.
+     */
+    export interface ListOptions {
+        limit?: number;
+        keys?: string[];
+        start_key?: string | number;
+        end_key?: string | number;
+        inclusive_end?: boolean;
+        descending?: boolean;
+        skip?: number;
+    }
+
     export interface Database<T extends CouchDoc> {
-        list: (options?: ListOptions) => Promise<{ offset: number, total_rows: number, rows: T[] }>;
+        list: (options?: ListOptions) => Promise<ListResponse<T>>;
         count: () => Promise<number>;
         get: (id: string, rev?: string) => Promise<T>;
         post: (data: T) => Promise<T>;
-        put: (data: T, rev?: string) => Promise<CouchResponse>;
+        put: (id: string, data: T, rev: string) => Promise<T>;
         delete: (id: string, rev: string) => Promise<void>;
         find: (selector: FindSelector) => Promise<T[]>;
-        copy: (data: T, newId: string) => Promise<T>;
+        copy: (id: string, data: T, newId: string) => Promise<T>;
         exists: (id: string) => Promise<boolean>;
+        view: <X>(design_doc_name: string, view_name: string, options?: ViewOptions) => Promise<ListResponse<X>>;
+        reducedView: <X>(design_doc_name: string, view_name: string, options?: ViewOptions) => Promise<{ rows: X[] }>;
     }
 
     export interface CouchResponse {
         ok: boolean;
         id: string;
         rev: string;
+    }
+
+    export interface ListResponse<T> {
+        offset: number;
+        total_rows: number;
+        rows: T[];
     }
 
     export interface FindSelector {
@@ -77,14 +104,14 @@ declare module "gearworks" {
         selector: Object;
     }
 
-    /**
-     * Options for listing database results.
-     */
-    export interface ListOptions {
-        limit?: number; 
-        skip?: number; 
-        view?: string;
-        descending?: boolean
+    export interface CouchDBView {
+        map: string;
+        reduce?: string;
+    }
+
+    export interface DesignDoc extends CouchDoc {
+        views: { [name: string]: CouchDBView };
+        language: "javascript";
     }
 
     //#endregion
@@ -133,6 +160,11 @@ declare module "gearworks" {
         shopify_shop_id?: number;
 
         /**
+         * The user's permissions.
+         */
+        permissions?: Enums.AuthScope[];
+        
+        /**
          * The user's plan id.
          */
         plan_id?: string;
@@ -141,11 +173,6 @@ declare module "gearworks" {
          * The user's Shopify charge id.
          */
         charge_id?: number;
-
-        /**
-         * The user's permissions.
-         */
-        permissions?: Enums.AuthScope[];
     }
 
     export interface SessionToken extends User {

@@ -138,7 +138,7 @@ export default class ForgotPasswordPage extends Router<IProps, IState> {
         return (
             <section id="login">
                 <div className="pure-g center-children">
-                    <div className="pure-u-12-24">
+                    <div className="pure-u-1-1 pure-u-md-12-24">
                         {body}
                         <div className="info-line">
                             <Link to={this.PATHS.auth.login}>{"Already know your password? Click here to log in."}</Link>

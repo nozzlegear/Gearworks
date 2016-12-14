@@ -8,13 +8,11 @@ import inspect from "./modules/inspect";
 import * as httpsRedirect from "redirect-https";
 import * as letsEncrypt from "letsencrypt-express";
 import { ISLIVE, EMAIL_DOMAIN } from "./modules/constants";
-import { json as parseJson, urlencoded as parseUrlEncoded } from "body-parser";
 
 // Server configurations
 import configureDatabase from "./modules/database";
 import configureCache from "./modules/cache";
 import configureRoutes from "./routes";
-
 
 async function startServer(hostname: string, port: number, securePort: number) {
     const app = express();
@@ -43,19 +41,16 @@ async function startServer(hostname: string, port: number, securePort: number) {
         }));
 
         app.use(require('webpack-hot-middleware')(compiler));
-    } else {
-        // Any request to the /dist path should server a static file from the dist folder.
-        app.use("/dist", express.static("dist"));
     }
+
+    // Any request to the /dist or /images paths should serve static files.
+    app.use("/dist", express.static("dist"));
+    app.use("/images", express.static("images"));
 
     // Let express trust the proxy that may be used on certain hosts (e.g. Azure and other cloud hosts). 
     // Enabling this will replace the `request.protocol` with the protocol that was requested by the end user, 
     // rather than the internal protocol used by the proxy.
     app.enable("trust proxy");
-
-    // Set up request body parsers
-    app.use(parseJson());
-    app.use(parseUrlEncoded({ extended: true }));
 
     // Configure the server
     await configureCache();
@@ -93,23 +88,22 @@ async function startServer(hostname: string, port: number, securePort: number) {
     const lexTempDir = path.join(os.tmpdir(), "acme-challenges");
     const lex = letsEncrypt.create({
         // You must set server to https://acme-v01.api.letsencrypt.org/directory after you have tested that your setup works.
-        server: (!ISLIVE || true) ? "staging" : "https://acme-v01.api.letsencrypt.org/directory",
+        server: (!ISLIVE) ? "staging" : "https://acme-v01.api.letsencrypt.org/directory",
         challenges: { 'tls-sni-01': require('le-challenge-sni').create({ webrootPath: lexTempDir }) },
         challengeType: 'tls-sni-01',
         store: require('le-store-certbot').create({ webrootPath: lexTempDir }),
-        approveDomains: (options: { email: string, agreeTos: boolean, domains: string[] }, certs, cb) => {
+        approveDomains: !ISLIVE ? ["127.0.0.1"] : (options: { email: string, agreeTos: boolean, domains: string[] }, certs, cb) => {
             options.email = `support@${EMAIL_DOMAIN}`;
             options.agreeTos = true;
             options.domains = (certs && certs.altnames) || options.domains;
 
-            // TODO: Uncomment the next block to ensure certificates are only approved for your own domain. 
-            // if (!options.domains.every(domain => domain.toLowerCase().indexOf(EMAIL_DOMAIN.toLowerCase()) >= 0)) {
-            //     const msg = `Attempted to approve a domain that wasn't ${EMAIL_DOMAIN} or a subdomain thereof.`;
+            if (!options.domains.every(domain => domain.toLowerCase().indexOf(EMAIL_DOMAIN.toLowerCase()) >= -0)) {
+                const msg = `Attempted to approve a domain that wasn't ${EMAIL_DOMAIN} or a subdomain thereof.`;
 
-            //     inspect(msg, options.domains);
+                inspect(msg, options.domains);
 
-            //     return cb(new Error(msg));
-            // }
+                return cb(new Error(msg));
+            }
 
             cb(null, { options, certs });
         },

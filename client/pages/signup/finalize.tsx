@@ -86,7 +86,7 @@ export default class FinalizePage extends Router<IProps, IState> {
         return (
             <section id="signup">
                 <div className="pure-g center-children">
-                    <div className="pure-u-12-24">
+                    <div className="pure-u-1-1 pure-u-md-12-24">
                         <Box title={`Connecting your Shopify store.`} description="Please wait." footer={action} error={error}>
                             <div style={{ paddingTop: padding, paddingBottom: padding, textAlign: "center" }}>
                                 {!error ? <CircularProgress /> : <FontIcon className="fa fa-frown-o" color={blueGrey700} style={{ fontSize: "6em" }} />}

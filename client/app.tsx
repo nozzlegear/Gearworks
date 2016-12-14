@@ -1,5 +1,5 @@
-// Import the babel-polyfill at the top of the application
-const polyfill = require("babel-polyfill");
+// Import the fetch polyfill at the top of the application
+const fetchPolyfill = require("whatwg-fetch");
 
 // Material-UI needs the react-tap-event-plugin activated
 const injectTapEventPlugin = require("react-tap-event-plugin");
@@ -13,7 +13,7 @@ import Paths, { getPathRegex } from "../modules/paths";
 import { Router, Redirect, Link, Route, IndexRoute, browserHistory, RouterContext } from "react-router";
 
 // Stores
-import { Auth as AuthStore, Dashboard as DashboardStore } from "./stores";
+import { Auth as AuthStore } from "./stores";
 
 // Layout components
 import Navbar from "./components/nav";
@@ -39,10 +39,12 @@ import AccountPage from "./pages/account";
 import baseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
-require("../node_modules/purecss/build/pure.css");
-require("../node_modules/typebase.css/typebase.css");
-require("../css/theme.styl");
-require("../css/error.styl");
+require("purecss/build/pure.css");
+require("purecss/build/grids-responsive.css");
+require("typebase.css/typebase.css");
+require("css/theme.styl");
+require("css/error.styl");
+require("css/utilities.styl");
 
 export const theme = getMuiTheme(baseTheme);
 
@@ -75,7 +77,9 @@ export function MinimalMain(props) {
         <main id="app" className="minimal"> 
             <div id="body">
                 <div className="page-header">
-                    <Link to={Paths.home.index}>{APP_NAME}</Link>
+                    <h1>
+                        <Link to={Paths.home.index}>{APP_NAME}</Link>
+                    </h1>
                 </div>
                 {React.cloneElement(props.children as any, props)}
             </div>
@@ -83,7 +87,7 @@ export function MinimalMain(props) {
     )
 }
 
-{
+(function (){
     function checkAuthState(requireShopifyIntegration: boolean) {
         return (args: Router.RouterState, replace: Router.RedirectFunction, callback: Function) => {
             if (AuthStore.sessionIsInvalid) {
@@ -104,7 +108,7 @@ export function MinimalMain(props) {
     }
 
     const routes = (
-        <Provider {...{ auth: AuthStore, dashboard: DashboardStore }}>
+        <Provider {...{ auth: AuthStore }}>
             <MuiThemeProvider muiTheme={theme}>
                 <Router history={browserHistory}>
                     <Route component={Main}>
@@ -119,8 +123,8 @@ export function MinimalMain(props) {
                         <Route path={Paths.auth.resetPassword} component={ResetPasswordPage} onEnter={args => document.title = "Reset your password."} /> 
                         <Route path={Paths.signup.index} component={SignupPage} onEnter={args => document.title = "Signup"} />
                         <Route onEnter={checkAuthState(false)}>
-                            <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store"} />
-                            <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store"} />
+                            <Route path={Paths.signup.integrate} component={IntegratePage} onEnter={args => document.title = "Connect your Shopify store."} />
+                            <Route path={Paths.signup.finalizeIntegration} component={FinalizeIntegrationPage} onEnter={args => document.title = "Connecting your Shopify store."} />
                         </Route>
                         <Route path={"/error/:statusCode"} component={ErrorPage} onEnter={(args) => {document.title = `Error ${args.params["statusCode"]} | ${APP_NAME}`}} />
                     </Route>
@@ -132,4 +136,4 @@ export function MinimalMain(props) {
     )
 
     renderComponent(routes, document.getElementById("contenthost"));
-}
+}())

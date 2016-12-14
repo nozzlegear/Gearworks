@@ -1,12 +1,24 @@
 import { wrap } from "boom";
+import inspect from "./inspect";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
-import { COUCHDB_URL } from "../modules/constants";
-import { User, Database, CouchResponse, CouchDoc } from "gearworks";
+import { snakeCase, isUndefined } from "lodash";
+import { COUCHDB_URL, APP_NAME } from "../modules/constants";
+import {
+    User,
+    Database,
+    CouchResponse,
+    ViewOptions,
+    CouchDoc,
+    ListResponse,
+    CouchDBView,
+    DesignDoc,
+} from "gearworks";
 
 const UsersDatabaseInfo = {
-    name: "gearworks_users",
-    indexes: ["shopify_access_token", "password_reset_token", "shop_id"]
+    name: `${snakeCase(APP_NAME)}_users`,
+    indexes: ["shopify_access_token", "password_reset_token", "shop_id"],
+    views: [],
 };
 
 export default async function configureDatabases() {
@@ -23,49 +35,127 @@ export default async function configureDatabases() {
         console.warn(`Warning: Gearworks expects your CouchDB instance to be running CouchDB 2.0 or higher. Version detected: ${version}. Some database methods may not work.`)
     }
 
-    [UsersDatabaseInfo].forEach(async db => {
-        try {
-            const result = await fetch(`${COUCHDB_URL}/${db.name}`, { method: "PUT" });
+    [UsersDatabaseInfo].forEach(async db => await configureDatabase(db));
+}
 
-            if (!result.ok && result.status !== 412 /* Precondition Failed - Database already exists. */) {
-                const body = await result.text();
+export async function configureDatabase(db: { name: string, indexes: string[], views: ({ designDocName: string, viewName: string } & CouchDBView)[] }) {
+    try {
+        const result = await fetch(`${COUCHDB_URL}/${db.name}`, { method: "PUT" });
 
-                throw new Error(`${result.status} ${result.statusText} ${body}`);
-            }
-        } catch (e) {
-            console.error(`Error creating database ${db.name}`, e);
+        if (!result.ok && result.status !== 412 /* Precondition Failed - Database already exists. */) {
+            const body = await result.text();
+
+            throw new Error(`${result.status} ${result.statusText} ${body}`);
+        }
+    } catch (e) {
+        console.error(`Error creating database ${db.name}`, e);
+
+        return;
+    }
+
+    try {
+        const result = await fetch(`${COUCHDB_URL}/${db.name}/_index`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                index: {
+                    fields: db.indexes
+                },
+                name: `${db.name}-indexes`,
+            })
+        });
+
+        if (!result.ok) {
+            const body = await result.text();
+
+            throw new Error(`${result.status} ${result.statusText} ${body}`);
+        }
+    } catch (e) {
+        console.error(`Error creating indexes (${db.indexes}) on database ${db.name}`, e);
+    }
+
+    const designDocs = db.views.reduce((result, view) => {
+        if (result.indexOf(view.designDocName) === -1) {
+            result.push(view.designDocName);
+        }
+
+        return result;
+    }, []);
+    const viewsByDoc: { [docname: string]: { name: string, map: string, reduce: string }[] } = db.views.reduce((result, view) => {
+        const item = {
+            name: view.viewName,
+            map: view.map,
+            reduce: view.reduce,
+        };
+
+        if (Array.isArray(result[view.designDocName])) {
+            result[view.designDocName].push(item);
+        } else {
+            result[view.designDocName] = [item]
+        }
+
+        return result;
+    }, {});
+
+    designDocs.forEach(async docName => {
+        const url = `${COUCHDB_URL}/${db.name}/_design/${docName}`;
+        const getDoc = await fetch(url, { method: "GET" });
+        let doc: DesignDoc;
+
+        if (!getDoc.ok && getDoc.status !== 404) {
+            inspect(`Failed to retrieve design doc "${docName}". ${getDoc.status} ${getDoc.statusText}`, await getDoc.text());
 
             return;
+        } else if (!getDoc.ok) {
+            doc = {
+                _id: `_design/${docName}`,
+                language: "javascript",
+                views: {}
+            }
+        } else {
+            doc = await getDoc.json();
         }
 
-        try {
-            const result = await fetch(`${COUCHDB_URL}/${db.name}/_index`, {
-                method: "POST",
+        const docViews = viewsByDoc[docName];
+        let shouldUpdate = false;
+
+        docViews.forEach(view => {
+            if (!doc.views[view.name] || doc.views[view.name].map !== view.map || doc.views[view.name].reduce !== view.reduce) {
+                doc.views[view.name] = {
+                    map: view.map,
+                    reduce: view.reduce,
+                }
+
+                shouldUpdate = true;
+            }
+        });
+
+        if (shouldUpdate) {
+            inspect(`Creating or updating design doc "${docName}".`);
+
+            const method = "put";
+            const result = await fetch(url, {
+                method,
+                body: JSON.stringify(doc),
                 headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    index: {
-                        fields: db.indexes
-                    },
-                    name: `${db.name}-indexes`,
-                })
+                    "Content-Type": "application/json",
+                }
             });
+            const text = await result.text();
 
             if (!result.ok) {
-                const body = await result.text();
-
-                throw new Error(`${result.status} ${result.statusText} ${body}`);
+                inspect(`Could not ${method} CouchDB design doc "${docName}". ${result.status} ${result.statusText}`, text);
+                inspect(doc);
             }
-        } catch (e) {
-            console.error(`Error creating indexes (${db.indexes}) on database ${db.name}`, e);
         }
-    });
+    })
 }
 
 function prepDatabase<T extends CouchDoc>(name: string) {
     const databaseUrl = `${COUCHDB_URL}/${name}/`;
-    async function checkErrorAndGetBody(result: Response, action: "finding" | "listing" | "counting" | "getting" | "posting" | "putting" | "deleting" | "copying") {
+    async function checkErrorAndGetBody(result: Response, action: "finding" | "listing" | "counting" | "getting" | "posting" | "putting" | "deleting" | "copying" | "viewing") {
         const body = await result.json();
 
         if (!result.ok) {
@@ -100,8 +190,9 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             return body.docs;
         },
         list: async function (options = {}) {
+            options = Object.assign({ design_doc_name: "list" }, )
             const query = qs(Object.assign({ include_docs: true }, options));
-            const url = databaseUrl + (options.view ? `_design/list/_view/${options.view}` : `_all_docs`);
+            const url = databaseUrl + `_all_docs`;
             const result = await fetch(`${url}?${query}`, {
                 method: "GET",
             });
@@ -142,8 +233,8 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
             return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
-        put: async function (data, rev?) {
-            const result = await fetch(databaseUrl + data._id + `?${qs({ rev })}`, {
+        put: async function (id: string, data, rev: string) {
+            const result = await fetch(databaseUrl + id + `?${qs({ rev })}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -156,8 +247,8 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             // Post, put and copy requests do not return the object itself. Update the input object with new id and rev values.
             return Object.assign({}, data, { _id: body.id, _rev: body.rev });
         },
-        copy: async function (data, newId) {
-            const result = await fetch(databaseUrl + data._id, {
+        copy: async function (id: string, data, newId) {
+            const result = await fetch(databaseUrl + id, {
                 method: "COPY",
                 headers: {
                     Destination: newId
@@ -183,6 +274,40 @@ function prepDatabase<T extends CouchDoc>(name: string) {
 
             return result.status === 200;
         },
+        view: async function (designDocName: string, viewName: string, options: ViewOptions = {}) {
+            if (options.reduce === true) {
+                console.warn("CouchDB .reducedView was passed {reduce: true} with its options. This function always sets reduce to false. Consider using CouchDB .reducedView instead.");
+            }
+
+            options.reduce = false;
+
+            const result = await fetch(`${databaseUrl}_design/${designDocName}/_view/${viewName}?${qs(options)}`, {
+                method: "GET",
+            })
+
+            const body = await checkErrorAndGetBody(result, "viewing");
+
+            return body;
+        },
+        reducedView: async function (designDocName: string, viewName: string, options: ViewOptions = {}) {
+            if (options.reduce === false) {
+                console.warn("CouchDB .reducedView was passed {reduce: false} with its options. This function always sets reduce to true. Consider using CouchDB .view instead.");
+            }
+
+            if (!options.group && isUndefined(options.group_level)) {
+                console.warn("CouchDB .reducedView is not grouping its results. This may not return the desired result. Consider using {group: true} or {group_level: 1}");
+            }
+
+            options.reduce = true;
+
+            const result = await fetch(`${databaseUrl}_design/${designDocName}/_view/${viewName}?${qs(options)}`, {
+                method: "GET",
+            })
+
+            const body = await checkErrorAndGetBody(result, "viewing");
+
+            return body;
+        }
     };
 
     return output;
