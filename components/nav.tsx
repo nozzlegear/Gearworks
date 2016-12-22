@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Auth } from "../stores";
 import { Link } from "react-router";
-import Paths from "../../modules/paths";
-import { APP_NAME } from "../../modules/constants";
+import Paths from "../modules/paths";
+import { APP_NAME } from "../modules/constants";
 import {
     AppBar,
     Drawer,

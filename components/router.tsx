@@ -3,7 +3,7 @@ import * as React from "react";
 import { History } from "history";
 import store from "../stores/auth";
 import * as Bluebird from "bluebird";
-import Paths from "../../modules/paths";
+import Paths from "../modules/paths";
 
 abstract class RouterComponent<IProps, IState> extends React.Component<IProps, IState> {
     constructor(props, context) {

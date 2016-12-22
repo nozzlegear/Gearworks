@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Plan } from "gearworks";
 import store from "../../stores/auth";
 import Router from "../../components/router";
-import { Users, ApiError, SessionTokenResponse } from "../../../modules/api";
+import { Users, ApiError, SessionTokenResponse } from "../../modules/api";
 import { Dialog, FlatButton, RaisedButton, TextField, FontIcon, SelectField, MenuItem } from "material-ui";
 
 export interface IProps extends React.Props<any> {

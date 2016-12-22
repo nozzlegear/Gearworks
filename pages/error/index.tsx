@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Link } from "react-router";
-import Paths from "../../../modules/paths";
+import Paths from "../../modules/paths";
 import { Location, History } from "history";
-import { APP_NAME } from "../../../modules/constants";
+import { APP_NAME } from "../../modules/constants";
 
 export interface IProps extends React.Props<any> {
     location: Location;

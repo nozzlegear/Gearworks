@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { theme } from "../../app";
+import { theme } from "../../client";
 import { observer } from "mobx-react";
 import { Models } from "shopify-prime";
+import Router from "../../components/router";
+import { Auth, Dashboard } from "../../stores";
 import NewOrderDialog from "./new_order_dialog";
-import Observer from "../../components/observer";
+import { Shopify, ApiError } from "../../modules/api";
 import AddIcon from "material-ui/svg-icons/content/add";
-import { Shopify, ApiError } from "../../../modules/api";
 import DeleteIcon from "material-ui/svg-icons/action/delete";
 import SelectAllIcon from "material-ui/svg-icons/content/select-all";
 import {
@@ -40,7 +41,7 @@ export interface IState {
 }
 
 @observer(["dashboard", "auth"])
-export default class HomePage extends Observer<IProps, IState> {
+export default class HomePage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -99,7 +100,7 @@ export default class HomePage extends Observer<IProps, IState> {
 
         this.setState({ loading: true, selectedRows: [] });
 
-        const api = new Shopify(this.props.auth.token);
+        const api = new Shopify(Auth.token);
         let order: Models.Order;
 
         try {
@@ -117,7 +118,7 @@ export default class HomePage extends Observer<IProps, IState> {
         }
 
         this.setState({loading: false, error: undefined}, () => {
-            this.props.dashboard.updateOrder(id, order);
+            Dashboard.updateOrder(id, order);
         })
     }
 
@@ -128,7 +129,7 @@ export default class HomePage extends Observer<IProps, IState> {
 
         this.setState({ loading: true, selectedRows: [] });
 
-        const api = new Shopify(this.props.auth.token);
+        const api = new Shopify(Auth.token);
         let error: string;
 
         try {
@@ -145,13 +146,13 @@ export default class HomePage extends Observer<IProps, IState> {
 
         this.setState({ loading: false, error }, () => {
             if (!error) {
-                this.props.dashboard.removeOrder(id);
+                Dashboard.removeOrder(id);
             }
         });
     }
 
     public async componentDidMount() {
-        const api = new Shopify(this.props.auth.token);
+        const api = new Shopify(Auth.token);
         let orders: Models.Order[] = [];
         let error: string;
 
@@ -169,7 +170,7 @@ export default class HomePage extends Observer<IProps, IState> {
 
         this.setState({ error }, () => {
             if (!error) {
-                this.props.dashboard.loadOrders(orders);
+                Dashboard.loadOrders(orders);
             }
         });
     }
@@ -186,7 +187,7 @@ export default class HomePage extends Observer<IProps, IState> {
         let body: JSX.Element;
         let toolbar: JSX.Element;
 
-        if (!this.props.dashboard.loaded) {
+        if (!Dashboard.loaded) {
             body = (
                 <div className="text-center" style={{ paddingTop: "50px", paddingBottom: "50px" }}>
                     <CircularProgress />
@@ -204,7 +205,7 @@ export default class HomePage extends Observer<IProps, IState> {
                         </TR>
                     </TableHeader>
                     <TableBody deselectOnClickaway={false}>
-                        {this.props.dashboard.orders.map((o, i) => (
+                        {Dashboard.orders.map((o, i) => (
                             <TR key={o.id} selected={this.rowIsSelected(i)} >
                                 <TD>{o.order_number}</TD>
                                 <TD>{`${o.customer.first_name} ${o.customer.last_name}`}</TD>
@@ -218,7 +219,7 @@ export default class HomePage extends Observer<IProps, IState> {
         };
 
         if (this.state.selectedRows && this.state.selectedRows.length > 0) {
-            const order: Models.Order = this.props.dashboard.orders[this.state.selectedRows[0]];
+            const order: Models.Order = Dashboard.orders[this.state.selectedRows[0]];
             const rawTheme = theme.rawTheme.palette;
             const toolbarStyle = {
                 backgroundColor: rawTheme.primary2Color,
@@ -259,7 +260,7 @@ export default class HomePage extends Observer<IProps, IState> {
         return (
             <div>
                 <section id="home" className="content">
-                    <h2 className="content-title">{`Latest Orders for ${this.props.auth.session.shopify_shop_name}`}</h2>
+                    <h2 className="content-title">{`Latest Orders for ${Auth.session.shopify_shop_name}`}</h2>
                     {body}
                 </section>
                 <FloatingActionButton title="New Order" onClick={e => this.setState({ dialogOpen: true })} style={{ position: "fixed", right: "50px", bottom: "75px" }}>
@@ -267,7 +268,7 @@ export default class HomePage extends Observer<IProps, IState> {
                 </FloatingActionButton>
                 {toolbar}
                 {this.state.error ? <Snackbar open={true} autoHideDuration={10000} message={this.state.error} onRequestClose={e => this.closeErrorSnackbar(e)} /> : null}
-                <NewOrderDialog apiToken={this.props.auth.token} open={this.state.dialogOpen} onRequestClose={() => this.setState({ dialogOpen: false })} />
+                <NewOrderDialog apiToken={Auth.token} open={this.state.dialogOpen} onRequestClose={() => this.setState({ dialogOpen: false })} />
             </div>
         );
     }

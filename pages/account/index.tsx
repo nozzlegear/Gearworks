@@ -4,9 +4,10 @@ import { Plan } from "gearworks";
 import * as gravatar from "gravatar";
 import { observer } from "mobx-react";
 import { Models } from "shopify-prime";
-import Observer from "../../components/observer";
-import { APP_NAME } from "../../../modules/constants";
-import { Shopify, ApiError } from "../../../modules/api";
+import AuthStore from "../../stores/auth";
+import Router from "../../components/router";
+import { APP_NAME } from "../../modules/constants";
+import { Shopify, ApiError } from "../../modules/api";
 import {
     Card,
     CardHeader,
@@ -25,8 +26,8 @@ export interface IState {
     passwordDialogOpen?: boolean;
 }
 
-@observer(["auth"])
-export default class AccountPage extends Observer<IProps, IState> {
+@observer
+export default class AccountPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -69,7 +70,7 @@ export default class AccountPage extends Observer<IProps, IState> {
 
     public render() {
         const {emailDialogOpen, passwordDialogOpen} = this.state;
-        const auth = this.props.auth.session;
+        const auth = AuthStore.session;
 
         return (
             <div>

@@ -1,10 +1,11 @@
 import * as React from 'react';
+import { Link } from "react-router";
 import store from "../../stores/auth";
 import Box from "../../components/box";
 import { SessionToken } from "gearworks";
 import Router from "../../components/router";
-import { APP_NAME } from "../../../modules/constants";
-import { ApiError, Shopify } from "../../../modules/api";
+import { APP_NAME } from "../../modules/constants";
+import { ApiError, Users } from "../../modules/api";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 
 export interface IProps {
@@ -16,7 +17,7 @@ export interface IState {
     error?: string;
 }
 
-export default class IntegratePage extends Router<IProps, IState> {
+export default class SignupPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -25,12 +26,16 @@ export default class IntegratePage extends Router<IProps, IState> {
 
     public state: IState = {};
 
-    private urlControl: TextField;
+    private usersApi = new Users();
+
+    private emailBox: TextField;
+
+    private passwordBox: TextField;
 
     //#region Utility functions
 
     private configureState(props: IProps, useSetState: boolean) {
-        let state: IState = {};
+        let state: IState = { }
 
         if (!useSetState) {
             this.state = state;
@@ -46,34 +51,31 @@ export default class IntegratePage extends Router<IProps, IState> {
     private async createAccount(e: React.MouseEvent<any> | React.FormEvent<any>) {
         e.preventDefault();
 
-        const {loading} = this.state;
-        const shopUrl = this.urlControl.getValue();
-        const api = new Shopify(store.token);
-
-        if (loading) {
+        if (this.state.loading) {
             return;
         }
 
         this.setState({ loading: true, error: undefined });
+        let token: string;
 
-        // Verify the shop url first
         try {
-            const result = await api.createAuthorizationUrl({
-                shop_domain: shopUrl,
-                redirect_url: `${window.location.protocol}//${window.location.host}${this.PATHS.signup.finalizeIntegration}`,
+            const result = await this.usersApi.create({
+                username: this.emailBox.getValue(),
+                password: this.passwordBox.getValue(),
             });
 
-            // Send the user to the integration URL
-            window.location.href = result.url;
-        } catch (e) {
+            token = result.token;
+        }
+        catch (e) {
             const err: ApiError = e;
 
-            if (err.unauthorized && this.handleUnauthorized(this.PATHS.signup.integrate)) {
-                return;
-            }
-
             this.setState({ loading: false, error: err.message });
+
+            return;
         }
+
+        store.login(token);
+        this.context.router.push(this.PATHS.signup.integrate);
     }
 
     public componentDidMount() {
@@ -95,23 +97,33 @@ export default class IntegratePage extends Router<IProps, IState> {
                 fullWidth={true}
                 primary={true}
                 onTouchTap={e => this.createAccount(e)}
-                label={loading ? "Connecting" : "Connect"}
+                label={loading ? "Starting Account" : "Start Account"}
                 icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null} />);
 
         return (
             <section id="signup">
                 <div className="pure-g center-children">
                     <div className="pure-u-1-1 pure-u-md-12-24">
-                        <Box title={`Connect your Shopify store.`} footer={actions} error={error}>
+                        <Box title={`Start your ${APP_NAME} account.`} footer={actions} error={error}>
                             <div className="form-group">
                                 <TextField
                                     fullWidth={true}
-                                    floatingLabelText="Your Shopify store URL"
-                                    type="text"
-                                    hintText="https://example.myshopify.com"
-                                    ref={c => this.urlControl = c} />
+                                    floatingLabelText="Email"
+                                    type="email"
+                                    hintText="john.doe@example.com"
+                                    ref={b => this.emailBox = b} />
+                            </div>
+                            <div className="form-group">
+                                <TextField
+                                    fullWidth={true}
+                                    floatingLabelText="Password"
+                                    type="password"
+                                    ref={b => this.passwordBox = b} />
                             </div>
                         </Box>
+                        <div className="info-line">
+                            <Link to={this.PATHS.auth.login}>{"Already have an account? Click here to log in."}</Link>
+                        </div>
                     </div>
                 </div>
             </section>

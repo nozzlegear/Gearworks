@@ -1,10 +1,10 @@
 import * as React from 'react';
 import inspect from "logspect";
 import { Models } from "shopify-prime";
-import Paths from "../../../modules/paths";
+import Paths from "../../modules/paths";
 import Router from "../../components/router";
 import Dashboard from "../../stores/dashboard";
-import { Shopify, ApiError } from "../../../modules/api";
+import { Shopify, ApiError } from "../../modules/api";
 import {
     Dialog,
     RaisedButton,

@@ -1,13 +1,13 @@
 import * as qs from "qs";
 import * as React from 'react';
-import * as Bluebird from "bluebird";
-import store from "../../stores/auth";
+import { theme } from "../../client";
 import Box from "../../components/box";
-import Router from "../../components/router";
-import { APP_NAME } from "../../../modules/constants";
+import Router from "./../../components/router";
+import { APP_NAME } from "../../modules/constants";
+import { Users, ApiError } from "../../modules/api";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
+import EmailIcon from "material-ui/svg-icons/communication/email";
 import { RouterState, RedirectFunction, Link } from "react-router";
-import { Sessions, ApiError, SessionTokenResponse } from "../../../modules/api";
 
 export interface IProps extends React.Props<any> {
 
@@ -18,7 +18,7 @@ export interface IState {
     loading?: boolean;
 }
 
-export default class AuthPage extends Router<IProps, IState> {
+export default class ResetPasswordPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -27,15 +27,13 @@ export default class AuthPage extends Router<IProps, IState> {
 
     public state: IState = {};
 
-    private redirectPath: string;
+    private api = new Users();
 
-    private redirectQuerystring: Object;
+    private token: string;
 
-    private api = new Sessions();
+    private passwordControl: TextField;
 
-    private emailBox: TextField;
-
-    private passwordBox: TextField;
+    private confirmControl: TextField;
 
     //#region Utility functions
 
@@ -62,18 +60,17 @@ export default class AuthPage extends Router<IProps, IState> {
             return;
         }
 
-        const username = this.emailBox.getValue();
-        const password = this.passwordBox.getValue();
-        let token: string;
+        const password = this.passwordControl.getValue();
+        const confirmPassword = this.confirmControl.getValue();
 
-        if (!username) {
-            this.setState({ error: "You must enter your username." });
+        if (!password || password.length < 6) {
+            this.setState({ error: "Password must be at least 6 characters long." });
 
             return;
         }
 
-        if (!password) {
-            this.setState({ error: "You must enter your password." });
+        if (confirmPassword !== password) {
+            this.setState({ error: "Passwords do not match." });
 
             return;
         }
@@ -81,23 +78,14 @@ export default class AuthPage extends Router<IProps, IState> {
         this.setState({ loading: true, error: undefined });
 
         try {
-            const result = await this.api.create({ username, password });
+            const result = await this.api.resetPassword({ reset_token: this.token, new_password: password });
 
-            token = result.token;
+            this.context.router.push(this.PATHS.auth.login);
         } catch (e) {
             const err: ApiError = e;
-
-            this.setState({ error: err.message, loading: false });
-
-            return;
-        }
-
-        store.login(token);
-
-        if (this.redirectPath) {
-            this.context.router.push(`${this.redirectPath}?${qs.stringify(this.redirectQuerystring)}`);
-        } else {
-            this.context.router.push(this.PATHS.home.index);
+            let message = err.unauthorized ? "Your password reset email has expired." : err.message;
+            
+            this.setState({ loading: false, error: message });
         }
     }
 
@@ -108,12 +96,15 @@ export default class AuthPage extends Router<IProps, IState> {
     }
 
     public componentDidMount() {
-        const query = qs.parse(window.location.search.replace(/^\?/i, "")) as { redirect?: string, qs?: Object };
+        const query = qs.parse(window.location.search.replace(/^\?/, "")) as { token: string };
 
-        if (query.redirect) {
-            this.redirectPath = query.redirect;
-            this.redirectQuerystring = query.qs;
+        if (!query.token) {
+            this.context.router.replace(this.PATHS.auth.forgotPassword);
+
+            return;
         }
+
+        this.token = decodeURIComponent(query.token);
     }
 
     public componentDidUpdate() {
@@ -132,10 +123,8 @@ export default class AuthPage extends Router<IProps, IState> {
                     onTouchTap={e => this.handleSignIn(e)}
                     primary={true}
                     fullWidth={true}
-                    label={loading ? "Signing in" : "Sign in"}
-                    icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null}
-                    style={{ marginBottom: "25px" }} />
-                <Link to={this.PATHS.auth.forgotPassword}>{"Forgot your password?"}</Link>
+                    label={loading ? "Resetting password" : "Reset password"}
+                    icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null} />
             </div>
         );
 
@@ -143,24 +132,24 @@ export default class AuthPage extends Router<IProps, IState> {
             <section id="login">
                 <div className="pure-g center-children">
                     <div className="pure-u-1-1 pure-u-md-12-24">
-                        <Box title="Sign in to your account." error={error} footer={footer}>
+                        <Box title="Reset your password." error={error} footer={footer}>
                             <div className="form-group">
                                 <TextField
                                     fullWidth={true}
-                                    floatingLabelText="Email"
-                                    type="email"
-                                    ref={box => this.emailBox = box} />
+                                    floatingLabelText="New Password"
+                                    type="password"
+                                    ref={c => this.passwordControl = c} />
                             </div>
                             <div className="form-group">
                                 <TextField
                                     fullWidth={true}
-                                    floatingLabelText="Password"
+                                    floatingLabelText="Confirm New Password"
                                     type="password"
-                                    ref={box => this.passwordBox = box} />
+                                    ref={c => this.confirmControl = c} />
                             </div>
                         </Box>
                         <div className="info-line">
-                            <Link to={this.PATHS.signup.index}>{"Don't have an account? Click here to create one."}</Link>
+                            <Link to={this.PATHS.auth.login}>{"Already know your password? Click here to log in."}</Link>
                         </div>
                     </div>
                 </div>

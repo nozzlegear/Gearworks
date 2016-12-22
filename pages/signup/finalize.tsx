@@ -3,8 +3,8 @@ import * as React from 'react';
 import store from "../../stores/auth";
 import Box from "../../components/box";
 import Router from "../../components/router";
+import { Shopify, ApiError } from "../../modules/api";
 import { blueGrey700 } from "material-ui/styles/colors";
-import { Shopify, ApiError } from "../../../modules/api";
 import { CircularProgress, RaisedButton, FontIcon } from "material-ui";
 
 export interface IProps {

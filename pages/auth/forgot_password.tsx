@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { theme } from "../../app";
+import { theme } from "../../client";
 import Box from "../../components/box";
 import Router from "../../components/router";
-import { APP_NAME } from "../../../modules/constants";
-import { Users, ApiError } from "../../../modules/api";
+import { APP_NAME } from "../../modules/constants";
+import { Users, ApiError } from "../../modules/api";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
 import EmailIcon from "material-ui/svg-icons/communication/email";
 import { RouterState, RedirectFunction, Link } from "react-router";

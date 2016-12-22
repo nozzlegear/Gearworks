@@ -19,7 +19,7 @@ const dev          = process.argv.some(arg => arg === "--dev");
 
 const config = {
     entry: {
-        "app": [ dev ? 'webpack-hot-middleware/client' : undefined, "./client/app", ].filter(arg => !!arg),
+        "client": [ dev ? 'webpack-hot-middleware/client' : undefined, "./client", ].filter(arg => !!arg),
     },
     output: {
         path: path.join(__dirname, "dist"),

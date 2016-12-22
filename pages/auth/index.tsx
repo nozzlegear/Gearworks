@@ -1,13 +1,13 @@
 import * as qs from "qs";
 import * as React from 'react';
-import { theme } from "../../app";
+import * as Bluebird from "bluebird";
+import store from "../../stores/auth";
 import Box from "../../components/box";
-import Router from "./../../components/router";
-import { APP_NAME } from "../../../modules/constants";
-import { Users, ApiError } from "../../../modules/api";
+import Router from "../../components/router";
+import { APP_NAME } from "../../modules/constants";
 import { TextField, RaisedButton, FontIcon } from "material-ui";
-import EmailIcon from "material-ui/svg-icons/communication/email";
 import { RouterState, RedirectFunction, Link } from "react-router";
+import { Sessions, ApiError, SessionTokenResponse } from "../../modules/api";
 
 export interface IProps extends React.Props<any> {
 
@@ -18,7 +18,7 @@ export interface IState {
     loading?: boolean;
 }
 
-export default class ResetPasswordPage extends Router<IProps, IState> {
+export default class AuthPage extends Router<IProps, IState> {
     constructor(props: IProps, context) {
         super(props, context);
 
@@ -27,13 +27,15 @@ export default class ResetPasswordPage extends Router<IProps, IState> {
 
     public state: IState = {};
 
-    private api = new Users();
+    private redirectPath: string;
 
-    private token: string;
+    private redirectQuerystring: Object;
 
-    private passwordControl: TextField;
+    private api = new Sessions();
 
-    private confirmControl: TextField;
+    private emailBox: TextField;
+
+    private passwordBox: TextField;
 
     //#region Utility functions
 
@@ -60,17 +62,18 @@ export default class ResetPasswordPage extends Router<IProps, IState> {
             return;
         }
 
-        const password = this.passwordControl.getValue();
-        const confirmPassword = this.confirmControl.getValue();
+        const username = this.emailBox.getValue();
+        const password = this.passwordBox.getValue();
+        let token: string;
 
-        if (!password || password.length < 6) {
-            this.setState({ error: "Password must be at least 6 characters long." });
+        if (!username) {
+            this.setState({ error: "You must enter your username." });
 
             return;
         }
 
-        if (confirmPassword !== password) {
-            this.setState({ error: "Passwords do not match." });
+        if (!password) {
+            this.setState({ error: "You must enter your password." });
 
             return;
         }
@@ -78,14 +81,23 @@ export default class ResetPasswordPage extends Router<IProps, IState> {
         this.setState({ loading: true, error: undefined });
 
         try {
-            const result = await this.api.resetPassword({ reset_token: this.token, new_password: password });
+            const result = await this.api.create({ username, password });
 
-            this.context.router.push(this.PATHS.auth.login);
+            token = result.token;
         } catch (e) {
             const err: ApiError = e;
-            let message = err.unauthorized ? "Your password reset email has expired." : err.message;
-            
-            this.setState({ loading: false, error: message });
+
+            this.setState({ error: err.message, loading: false });
+
+            return;
+        }
+
+        store.login(token);
+
+        if (this.redirectPath) {
+            this.context.router.push(`${this.redirectPath}?${qs.stringify(this.redirectQuerystring)}`);
+        } else {
+            this.context.router.push(this.PATHS.home.index);
         }
     }
 
@@ -96,15 +108,12 @@ export default class ResetPasswordPage extends Router<IProps, IState> {
     }
 
     public componentDidMount() {
-        const query = qs.parse(window.location.search.replace(/^\?/, "")) as { token: string };
+        const query = qs.parse(window.location.search.replace(/^\?/i, "")) as { redirect?: string, qs?: Object };
 
-        if (!query.token) {
-            this.context.router.replace(this.PATHS.auth.forgotPassword);
-
-            return;
+        if (query.redirect) {
+            this.redirectPath = query.redirect;
+            this.redirectQuerystring = query.qs;
         }
-
-        this.token = decodeURIComponent(query.token);
     }
 
     public componentDidUpdate() {
@@ -123,8 +132,10 @@ export default class ResetPasswordPage extends Router<IProps, IState> {
                     onTouchTap={e => this.handleSignIn(e)}
                     primary={true}
                     fullWidth={true}
-                    label={loading ? "Resetting password" : "Reset password"}
-                    icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null} />
+                    label={loading ? "Signing in" : "Sign in"}
+                    icon={loading ? <FontIcon className="fa fa-spinner fa-spin" /> : null}
+                    style={{ marginBottom: "25px" }} />
+                <Link to={this.PATHS.auth.forgotPassword}>{"Forgot your password?"}</Link>
             </div>
         );
 
@@ -132,24 +143,24 @@ export default class ResetPasswordPage extends Router<IProps, IState> {
             <section id="login">
                 <div className="pure-g center-children">
                     <div className="pure-u-1-1 pure-u-md-12-24">
-                        <Box title="Reset your password." error={error} footer={footer}>
+                        <Box title="Sign in to your account." error={error} footer={footer}>
                             <div className="form-group">
                                 <TextField
                                     fullWidth={true}
-                                    floatingLabelText="New Password"
-                                    type="password"
-                                    ref={c => this.passwordControl = c} />
+                                    floatingLabelText="Email"
+                                    type="email"
+                                    ref={box => this.emailBox = box} />
                             </div>
                             <div className="form-group">
                                 <TextField
                                     fullWidth={true}
-                                    floatingLabelText="Confirm New Password"
+                                    floatingLabelText="Password"
                                     type="password"
-                                    ref={c => this.confirmControl = c} />
+                                    ref={box => this.passwordBox = box} />
                             </div>
                         </Box>
                         <div className="info-line">
-                            <Link to={this.PATHS.auth.login}>{"Already know your password? Click here to log in."}</Link>
+                            <Link to={this.PATHS.signup.index}>{"Don't have an account? Click here to create one."}</Link>
                         </div>
                     </div>
                 </div>

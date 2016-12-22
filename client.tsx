@@ -1,15 +1,12 @@
-// Import the fetch polyfill at the top of the application
-const fetchPolyfill = require("whatwg-fetch");
-
 // Material-UI needs the react-tap-event-plugin activated
 const injectTapEventPlugin = require("react-tap-event-plugin");
 injectTapEventPlugin();
 
 import * as React from "react";
 import { Provider } from "mobx-react";
-import { APP_NAME } from "../modules/constants";
+import { APP_NAME } from "./modules/constants";
 import { render as renderComponent } from "react-dom";
-import Paths, { getPathRegex } from "../modules/paths";
+import Paths, { getPathRegex } from "./modules/paths";
 import { Router, Redirect, Link, Route, IndexRoute, browserHistory, RouterContext } from "react-router";
 
 // Stores

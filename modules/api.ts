@@ -34,7 +34,7 @@ export class ApiError extends Error {
                 }
             }
         } else {
-            // A fetch error occurred.
+            // A network error occurred.
             this.status = 503;
             this.statusText = "Service Unavailable";
             this.unauthorized = false;
@@ -74,7 +74,7 @@ export default class BaseService {
             body = result.data;
         }
         catch (e) {
-            // Fetch only throws an error when a network error is encountered.
+            // Axios was configured to only throw an error when a network error is encountered.
             inspect(`There was a problem the fetch operation for ${url}`, e);
 
             throw new ApiError();
