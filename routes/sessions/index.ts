@@ -1,5 +1,6 @@
 import * as joi from "joi";
 import * as boom from "boom";
+import inspect from "logspect";
 import { Express } from "express";
 import { compareSync } from "bcryptjs";
 import { users } from "./../../modules/database";
@@ -41,7 +42,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             try {
                 await deleteCacheValue("auth-invalidation", user._id);
             } catch (e) {
-                console.error(`Failed to remove user ${user._id} from auth-invalidation cache.`, e);                
+                inspect(`Failed to remove user ${user._id} from auth-invalidation cache.`, e);                
             }
 
             res = await res.withSessionToken(user);

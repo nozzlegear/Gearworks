@@ -1,3 +1,4 @@
+import inspect from "logspect";
 import { Models } from "shopify-prime";
 import { resolve, reject } from "bluebird";
 import { stringify as queryString } from "qs";
@@ -22,7 +23,7 @@ export class ApiError extends Error {
                     this.message = Array.isArray(response.details) ? response.details.map(e => e.errors.join(", ")).join(", ") : response.message;
                     this.details = response.details;
                 } catch (e) {
-                    console.error("Could not parse response's error JSON.", body);
+                    inspect("Could not parse response's error JSON.", body);
                 }
             }
         } else {
@@ -69,7 +70,7 @@ export default class BaseService {
         }
         catch (e) {
             // Fetch only throws an error when a network error is encountered.
-            console.error(`There was a problem the fetch operation for ${url}`, e);
+            inspect(`There was a problem the fetch operation for ${url}`, e);
 
             throw new ApiError();
         }
@@ -78,7 +79,7 @@ export default class BaseService {
             textBody = await result.text();
             parsedBody = JSON.parse(textBody || "{}");
         } catch (e) {
-            console.error("Could not read or parse body text.", e);
+            inspect("Could not read or parse body text.", e);
 
             throw new ApiError();
         }

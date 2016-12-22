@@ -1,5 +1,5 @@
 import { wrap } from "boom";
-import inspect from "./inspect";
+import inspect from "logspect";
 import { stringify as qs } from "qs";
 import fetch, { Response } from "node-fetch";
 import { snakeCase, isUndefined } from "lodash";
@@ -32,7 +32,7 @@ export default async function configureDatabases() {
     const version = parseInt(infoBody.version);
 
     if (version < 2) {
-        console.warn(`Warning: Gearworks expects your CouchDB instance to be running CouchDB 2.0 or higher. Version detected: ${version}. Some database methods may not work.`)
+        inspect(`Warning: Gearworks expects your CouchDB instance to be running CouchDB 2.0 or higher. Version detected: ${version}. Some database methods may not work.`)
     }
 
     [UsersDatabaseInfo].forEach(async db => await configureDatabase(db));
@@ -48,7 +48,7 @@ export async function configureDatabase(db: { name: string, indexes: string[], v
             throw new Error(`${result.status} ${result.statusText} ${body}`);
         }
     } catch (e) {
-        console.error(`Error creating database ${db.name}`, e);
+        inspect(`Error creating database ${db.name}`, e);
 
         return;
     }
@@ -73,7 +73,7 @@ export async function configureDatabase(db: { name: string, indexes: string[], v
             throw new Error(`${result.status} ${result.statusText} ${body}`);
         }
     } catch (e) {
-        console.error(`Error creating indexes (${db.indexes}) on database ${db.name}`, e);
+        inspect(`Error creating indexes (${db.indexes}) on database ${db.name}`, e);
     }
 
     const designDocs = db.views.reduce((result, view) => {
@@ -162,7 +162,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             const message = `Error ${action} document(s) for CouchDB database ${name} at ${result.url}. ${result.status} ${result.statusText}`;
 
             if (result.status !== 404) {
-                console.error(message, body)
+                inspect(message, body)
             }
 
             throw wrap(new Error(message), result.status, message);
@@ -184,7 +184,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
             const body = await checkErrorAndGetBody(result, "finding");
 
             if (body.warning) {
-                console.warn(body.warning);
+                inspect(body.warning);
             }
 
             return body.docs;
@@ -235,7 +235,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
         },
         put: async function (id: string, data, rev: string) {
             if (!rev) {
-                console.warn(`Warning: no revision specified for CouchDB .put function with id ${id}. This may cause a document conflict error.`);
+                inspect(`Warning: no revision specified for CouchDB .put function with id ${id}. This may cause a document conflict error.`);
             }
 
             const result = await fetch(databaseUrl + id + `?${qs({ rev })}`, {
@@ -266,7 +266,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
         },
         delete: async function (id, rev) {
             if (!rev) {
-                console.warn(`Warning: no revision specified for CouchDB .delete function with id ${id}. This may cause a document conflict error.`);
+                inspect(`Warning: no revision specified for CouchDB .delete function with id ${id}. This may cause a document conflict error.`);
             }
 
             const result = await fetch(databaseUrl + id + `?${qs({ rev })}`, {
@@ -284,7 +284,7 @@ function prepDatabase<T extends CouchDoc>(name: string) {
         },
         view: async function (designDocName: string, viewName: string, options: ViewOptions = {}) {
             if (options.reduce === true) {
-                console.warn("CouchDB .reducedView was passed {reduce: true} with its options. This function always sets reduce to false. Consider using CouchDB .reducedView instead.");
+                inspect("CouchDB .reducedView was passed {reduce: true} with its options. This function always sets reduce to false. Consider using CouchDB .reducedView instead.");
             }
 
             options.reduce = false;
@@ -299,11 +299,11 @@ function prepDatabase<T extends CouchDoc>(name: string) {
         },
         reducedView: async function (designDocName: string, viewName: string, options: ViewOptions = {}) {
             if (options.reduce === false) {
-                console.warn("CouchDB .reducedView was passed {reduce: false} with its options. This function always sets reduce to true. Consider using CouchDB .view instead.");
+                inspect("CouchDB .reducedView was passed {reduce: false} with its options. This function always sets reduce to true. Consider using CouchDB .view instead.");
             }
 
             if (!options.group && isUndefined(options.group_level)) {
-                console.warn("CouchDB .reducedView is not grouping its results. This may not return the desired result. Consider using {group: true} or {group_level: 1}");
+                inspect("CouchDB .reducedView is not grouping its results. This may not return the desired result. Consider using {group: true} or {group_level: 1}");
             }
 
             options.reduce = true;

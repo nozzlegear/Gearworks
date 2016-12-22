@@ -1,5 +1,6 @@
 import * as joi from "joi";
 import * as boom from "boom";
+import inspect from "logspect";
 import { Express } from "express";
 import { createTransport } from "nodemailer";
 import { RouterFunction, User } from "gearworks";
@@ -73,7 +74,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 // CouchDB does not allow modifying a doc's id, so we copy the user to a new document instead.
                 user = await users.copy(_id, user, model.username.toLowerCase());
             } catch (e) {
-                console.error("Failed to copy user model to new id.", e);
+                inspect("Failed to copy user model to new id.", e);
 
                 return next(boom.badData("Failed to save new user id."));
             }
@@ -82,7 +83,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 // Delete the old user document
                 await users.delete(_id, _rev);
             } catch (e) {
-                console.error(`Failed to delete user doc ${_id} after changing username to ${model.username}`, e);
+                inspect(`Failed to delete user doc ${_id} after changing username to ${model.username}`, e);
             }
 
             await res.withSessionToken(user);
@@ -195,7 +196,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             try {
                 user = await users.put(user._id, user, user._rev);
             } catch (e) {
-                console.error("Failed to update user's password.", e);
+                inspect("Failed to update user's password.", e);
 
                 return next(e);
             }

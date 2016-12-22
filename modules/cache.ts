@@ -1,3 +1,4 @@
+import inspect from "logspect";
 import * as Bluebird from "bluebird";
 import { COUCHDB_URL } from "./constants"; 
 import { Client, CachePolicy, CachedItem, CacheClient } from "catbox";
@@ -16,7 +17,7 @@ export default async function registerCaches() {
 
     client.start(async (error) => {
         if (error) {
-            console.error("Error starting cache client", error);
+            inspect("Error starting cache client", error);
 
             throw error;
         }

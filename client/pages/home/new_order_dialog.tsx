@@ -1,4 +1,5 @@
 import * as React from 'react';
+import inspect from "logspect";
 import { Models } from "shopify-prime";
 import Paths from "../../../modules/paths";
 import Router from "../../components/router";
@@ -104,7 +105,7 @@ export default class NewOrderDialog extends Router<IProps, IState> {
 
         this.setState({ error, loading: false }, () => {
             if (order) {
-                console.log("TODO: clear form.");
+                inspect("TODO: clear form.");
 
                 Dashboard.addOrder(order);
                 this.props.onRequestClose();

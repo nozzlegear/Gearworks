@@ -1,8 +1,8 @@
 import * as cors from "cors";
+import inspect from "logspect";
 import { Auth } from "shopify-prime";
 import * as Bluebird from "bluebird";
 import { Schema, validate } from "joi";
-import inspect from "../modules/inspect";
 import { decode, encode } from "jwt-simple";
 import { getCacheValue } from "../modules/cache";
 import { seal, unseal } from "../modules/encryption";
@@ -39,7 +39,7 @@ export default async function registerAllRoutes(app: Express) {
                 try {
                     result[propName] = await seal(user[propName]);
                 } catch (e) {
-                    console.error(`Failed to encrypt Iron-sealed property ${propName}. Removing property from resulting session token object.`, e);
+                    inspect(`Failed to encrypt Iron-sealed property ${propName}. Removing property from resulting session token object.`, e);
 
                     // Prevent sending the unencrypted value to the client.
                     result[propName] = undefined;
@@ -101,7 +101,7 @@ export default async function registerAllRoutes(app: Express) {
                         return next(unauthorized(`Server cache indicates that user must reauthenticate.`));
                     }
                 } catch (e) {
-                    console.error(`Error attempting to retrieve ${user._id} value from auth-invalidation cache.`, e);
+                    inspect(`Error attempting to retrieve ${user._id} value from auth-invalidation cache.`, e);
                 }
 
                 // Decrypt sensitive Iron-sealed properties
@@ -110,7 +110,7 @@ export default async function registerAllRoutes(app: Express) {
                         try {
                             result[propName] = await unseal(user[propName]);
                         } catch (e) {
-                            console.error(`Failed to decrypt Iron-sealed property ${propName}.`, e);
+                            inspect(`Failed to decrypt Iron-sealed property ${propName}.`, e);
                         }
                     }
 

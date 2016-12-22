@@ -2,9 +2,9 @@ import * as os from "os";
 import * as path from "path";
 import * as http from "http";
 import * as https from "https";
+import inspect from "logspect";
 import * as express from "express";
 import { BoomError, wrap } from "boom";
-import inspect from "./modules/inspect";
 import * as httpsRedirect from "redirect-https";
 import * as letsEncrypt from "letsencrypt-express";
 import { ISLIVE, EMAIL_DOMAIN } from "./modules/constants";
@@ -122,7 +122,7 @@ const port = process.env.PORT || 3000;
 const securePort = process.env.SECURE_PORT || 3001;
 
 startServer(host, port, securePort).then((servers: { http: http.Server, https: https.Server }) => {
-    console.log(`HTTP and HTTPS servers are listening on ${host}:${port} and ${host}:${securePort}.`);
+    inspect(`HTTP and HTTPS servers are listening on ${host}:${port} and ${host}:${securePort}.`);
 }).catch(e => {
-    console.error("Error starting server.", e);
+    inspect("Error starting server.", e);
 });

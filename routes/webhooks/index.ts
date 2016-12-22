@@ -1,7 +1,7 @@
 import * as joi from "joi";
 import * as boom from "boom";
+import inspect from "logspect";
 import { Express } from "express";
-import inspect from "../../modules/inspect";
 import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
 import { setCacheValue } from "../../modules/cache";

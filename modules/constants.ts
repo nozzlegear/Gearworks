@@ -1,5 +1,7 @@
+import inspect from "logspect";
 import { resolve } from "path";
 import { snakeCase } from "lodash";
+import isBrowser from "is-in-browser";
 import { Enums } from "shopify-prime";
 import { v4 as guid } from "node-uuid";
 
@@ -7,11 +9,6 @@ import { v4 as guid } from "node-uuid";
 declare const NODE_ENV: string;
 
 const env = process && process.env || {};
-let isBrowser = true;
-
-if (typeof process === 'object' && process + '' === '[object process]') {
-    isBrowser = false;
-}
 
 export const APP_NAME = "Gearworks";
 
@@ -52,26 +49,26 @@ export const SEALABLE_USER_PROPERTIES = ["shopify_access_token"];
 
 if (!isBrowser) {
     if (!JWT_SECRET_KEY) {
-        console.warn("Warning: JWT_SECRET_KEY was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
+        inspect("Warning: JWT_SECRET_KEY was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
     }
 
     if (!IRON_PASSWORD) {
-        console.warn("Warning: IRON_PASSWORD was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
+        inspect("Warning: IRON_PASSWORD was not found in environment variables. Session authorization will be unsecure and may exhibit unwanted behavior.");
     }
 
     if (!SHOPIFY_API_KEY) {
-        console.warn("Warning: SHOPIFY_API_KEY was not found in environment variables. Shopify integration will be impossible.");
+        inspect("Warning: SHOPIFY_API_KEY was not found in environment variables. Shopify integration will be impossible.");
     }
 
     if (!SHOPIFY_SECRET_KEY) {
-        console.warn("Warning: SHOPIFY_SECRET_KEY was not found in environment variables. Shopify integration will be impossible.");
+        inspect("Warning: SHOPIFY_SECRET_KEY was not found in environment variables. Shopify integration will be impossible.");
     }
 
     if (!EMAIL_DOMAIN) {
-        console.warn("Warning: EMAIL_DOMAIN was not found in environment varialbes. Password reset will be impossible.")
+        inspect("Warning: EMAIL_DOMAIN was not found in environment varialbes. Password reset will be impossible.")
     }
 
     if (!SPARKPOST_API_KEY) {
-        console.warn("Warning: SPARKPOST_API_KEY was not found in environment variables. Password reset will be impossible.");
+        inspect("Warning: SPARKPOST_API_KEY was not found in environment variables. Password reset will be impossible.");
     }
 }

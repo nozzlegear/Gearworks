@@ -1,8 +1,8 @@
 import * as qs from "qs";
 import * as joi from "joi";
 import * as boom from "boom";
+import inspect from "logspect";
 import { Express } from "express";
-import inspect from "../../modules/inspect";
 import { users } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
 import { BASE_PATH as WEBHOOKS_BASE_PATH } from "../webhooks";
@@ -57,7 +57,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             try {
                 user = await users.get(req.user._id);
             } catch (e) {
-                console.error(`Error getting user ${req.user._id} from database.`, e);
+                inspect(`Error getting user ${req.user._id} from database.`, e);
 
                 return next(e);
             }
@@ -75,13 +75,13 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 user.shopify_shop_name = shop.name;
                 user.shopify_shop_id = shop.id;
             } catch (e) {
-                console.error(`Failed to get shop data from ${model.shop}`, e);
+                inspect(`Failed to get shop data from ${model.shop}`, e);
             }
 
             try {
                 user = await users.put(user._id, user, user._rev);
             } catch (e) {
-                console.error(`Failed to update user ${user._id}'s Shopify access token`, e);
+                inspect(`Failed to update user ${user._id}'s Shopify access token`, e);
 
                 return next(e);
             }
