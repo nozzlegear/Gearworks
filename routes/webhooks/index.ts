@@ -2,7 +2,7 @@ import * as joi from "joi";
 import * as boom from "boom";
 import inspect from "logspect";
 import { Express } from "express";
-import { users } from "../../modules/database";
+import { UserDb } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
 import { setCacheValue } from "../../modules/cache";
 
@@ -18,7 +18,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         validateShopifyWebhook: true,
         handler: async function (req, res, next) {
             const query = req.query as { shop_id: string, shop: string };
-            const userSearch = await users.find({
+            const userSearch = await UserDb.find({
                 selector: {
                     shopify_shop_id: parseInt(query.shop_id)
                 } as User
@@ -43,7 +43,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.charge_id = undefined;
             user.plan_id = undefined;
 
-            const update = await users.put(user._id, user, user._rev);
+            const update = await UserDb.put(user._id, user, user._rev);
 
             // Add the user's id to the auth-invalidation cache, forcing their next request to prompt them to login again.
             try {

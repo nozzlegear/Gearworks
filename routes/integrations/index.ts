@@ -3,7 +3,7 @@ import * as joi from "joi";
 import * as boom from "boom";
 import inspect from "logspect";
 import { Express } from "express";
-import { users } from "../../modules/database";
+import { UserDb } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
 import { BASE_PATH as WEBHOOKS_BASE_PATH } from "../webhooks";
 import { Auth, Shops, Webhooks, RecurringCharges, Models, ScriptTags } from "shopify-prime";
@@ -55,7 +55,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             let user: User;
 
             try {
-                user = await users.get(req.user._id);
+                user = await UserDb.get(req.user._id);
             } catch (e) {
                 inspect(`Error getting user ${req.user._id} from database.`, e);
 
@@ -79,7 +79,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             }
 
             try {
-                user = await users.put(user._id, user, user._rev);
+                user = await UserDb.put(user._id, user, user._rev);
             } catch (e) {
                 inspect(`Failed to update user ${user._id}'s Shopify access token`, e);
 

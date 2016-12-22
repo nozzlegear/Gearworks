@@ -1,29 +1,36 @@
 import inspect from "logspect";
+import isOkay from "./axios_utils";
 import { Models } from "shopify-prime";
 import { resolve, reject } from "bluebird";
-import { stringify as queryString } from "qs";
+import Axios, { AxiosResponse } from "axios";
+import { AUTH_HEADER_NAME } from "./constants";
+import { SessionToken, CouchResponse } from "gearworks";
 import { CreateOrderRequest } from "gearworks/requests";
 
 // Interfaces
 import Order = Models.Order;
 
+export interface SessionTokenResponse {
+    token: string;
+}
+
 export class ApiError extends Error {
-    constructor(body?: string, data?: Response) {
+    constructor(body?: string | Object, axiosResponse?: AxiosResponse) {
         super("Something went wrong and your request could not be completed.");
 
-        if (!!data) {
-            this.unauthorized = data.status === 401;
-            this.status = data.status;
-            this.statusText = data.statusText;
+        if (!!axiosResponse) {
+            this.unauthorized = axiosResponse.status === 401;
+            this.status = axiosResponse.status;
+            this.statusText = axiosResponse.statusText;
 
             if (body) {
                 try {
-                    const response: { message: string, details: { key: string, errors: string[] }[] } = JSON.parse(body || "{}");
+                    const response: { message: string, details: { key: string, errors: string[] }[] } = typeof (body) === "string" ? JSON.parse(body || "{}") : body;
 
                     this.message = Array.isArray(response.details) ? response.details.map(e => e.errors.join(", ")).join(", ") : response.message;
                     this.details = response.details;
                 } catch (e) {
-                    inspect("Could not parse response's error JSON.", body);
+                    inspect("Could not read response's error JSON.", body);
                 }
             }
         } else {
@@ -43,30 +50,28 @@ export class ApiError extends Error {
     public details?: any;
 }
 
-export interface SessionTokenResponse {
-    token: string;
-}
-
 export default class BaseService {
     constructor(private basePath?: string, private authToken?: string) { }
 
-    protected async sendRequest<T>(path: string, method: "POST" | "PUT" | "GET" | "DELETE", data?: any) {
-        const url = `${this.basePath}/${path}${method === "GET" ? ("?" + queryString(data)) : ""}`.replace(/\/\/+/i, "/");
-        const request = resolve(fetch(url, {
+    protected async sendRequest<T>(path: string, method: "POST" | "PUT" | "GET" | "DELETE", bodyData?: any, qsData?: any) {
+        const url = `${this.basePath}/${path}`.replace(/\/\/+/i, "/");
+        const request = Axios({
+            url,
             method: method,
             headers: {
-                "Content-Type": data ? "application/json" : undefined,
-                "x-gearworks-token": this.authToken || undefined,
+                "Content-Type": bodyData ? "application/json" : undefined,
+                [AUTH_HEADER_NAME]: this.authToken || undefined,
             },
-            body: (method !== "GET" && data) ? JSON.stringify(data) : undefined,
-        }));
+            params: qsData,
+            data: bodyData,
+        });
 
-        let result: Response;
-        let parsedBody: T;
-        let textBody: string;
+        let result: AxiosResponse;
+        let body: T;
 
         try {
             result = await request;
+            body = result.data;
         }
         catch (e) {
             // Fetch only throws an error when a network error is encountered.
@@ -75,20 +80,11 @@ export default class BaseService {
             throw new ApiError();
         }
 
-        try {
-            textBody = await result.text();
-            parsedBody = JSON.parse(textBody || "{}");
-        } catch (e) {
-            inspect("Could not read or parse body text.", e);
-
-            throw new ApiError();
+        if (!isOkay(result)) {
+            throw new ApiError(body, result);
         }
 
-        if (!result.ok) {
-            throw new ApiError(textBody, result);
-        }
-
-        return parsedBody;
+        return body;
     }
 }
 

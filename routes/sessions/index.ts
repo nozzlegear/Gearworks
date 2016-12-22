@@ -3,7 +3,7 @@ import * as boom from "boom";
 import inspect from "logspect";
 import { Express } from "express";
 import { compareSync } from "bcryptjs";
-import { users } from "./../../modules/database";
+import { UserDb } from "../../modules/database";
 import { RouterFunction, User } from "gearworks";
 import { deleteCacheValue } from "../../modules/cache";
 
@@ -25,7 +25,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             let user: User;
 
             try {
-                user = await users.get(model.username.toLowerCase());
+                user = await UserDb.get(model.username.toLowerCase());
             } catch (e) {
                 const err: boom.BoomError = e;
 

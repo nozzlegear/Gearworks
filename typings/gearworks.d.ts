@@ -38,6 +38,7 @@ declare module "gearworks" {
     //#endregion
 
     //#region Database
+
     export interface CouchDoc {
         /**
          * The object's database id.
@@ -67,6 +68,19 @@ declare module "gearworks" {
         inclusive_end?: boolean;
         descending?: boolean;
         skip?: number;
+    }
+
+    export interface AllDocsListResult<T> {
+        rows: {
+            id: string,
+            key: string,
+            value: {
+                rev: string
+            },
+            doc: T
+        }[],
+        offset: number,
+        total_rows: number
     }
 
     export interface Database<T extends CouchDoc> {
@@ -112,6 +126,17 @@ declare module "gearworks" {
     export interface DesignDoc extends CouchDoc {
         views: { [name: string]: CouchDBView };
         language: "javascript";
+    }
+
+    export interface DatabaseConfiguration {
+        name: string,
+        indexes: string[],
+        designDocs: {
+            name: string,
+            views: ({
+                name: string,
+            } & CouchDBView)[]
+        }[],
     }
 
     //#endregion
@@ -163,7 +188,7 @@ declare module "gearworks" {
          * The user's permissions.
          */
         permissions?: Enums.AuthScope[];
-        
+
         /**
          * The user's plan id.
          */

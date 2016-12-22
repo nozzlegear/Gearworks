@@ -4,8 +4,8 @@ import inspect from "logspect";
 import { Express } from "express";
 import { createTransport } from "nodemailer";
 import { RouterFunction, User } from "gearworks";
-import { users } from "./../../modules/database";
 import { hashSync, compareSync } from "bcryptjs";
+import { UserDb } from "./../../modules/database";
 import { seal, unseal } from "../../modules/encryption";
 import { RecurringCharges, Models } from "shopify-prime";
 import { ISLIVE, EMAIL_DOMAIN, APP_NAME, SPARKPOST_API_KEY } from "../../modules/constants";
@@ -31,11 +31,11 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         handler: async function (req, res, next) {
             const model = req.validatedBody as { username: string, password: string };
 
-            if (await users.exists(model.username.toLowerCase())) {
+            if (await UserDb.exists(model.username.toLowerCase())) {
                 return next(boom.badData(`A user with that username already exists.`));
             }
 
-            const user = await users.post({
+            const user = await UserDb.post({
                 _id: model.username.toLowerCase(),
                 hashed_password: hashSync(model.password),
                 date_created: new Date().toISOString(),
@@ -58,11 +58,11 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         handler: async function (req, res, next) {
             const model = req.validatedBody as { username: string, password: string };
 
-            if (await users.exists(model.username.toLowerCase())) {
+            if (await UserDb.exists(model.username.toLowerCase())) {
                 return next(boom.badData(`A user with that username already exists.`));
             }
 
-            let user = await users.get(req.user._id);
+            let user = await UserDb.get(req.user._id);
             const {_id, _rev} = user;
 
             // Ensure the user's password is correct before changing their username
@@ -72,7 +72,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             try {
                 // CouchDB does not allow modifying a doc's id, so we copy the user to a new document instead.
-                user = await users.copy(_id, user, model.username.toLowerCase());
+                user = await UserDb.copy(_id, user, model.username.toLowerCase());
             } catch (e) {
                 inspect("Failed to copy user model to new id.", e);
 
@@ -81,7 +81,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             try {
                 // Delete the old user document
-                await users.delete(_id, _rev);
+                await UserDb.delete(_id, _rev);
             } catch (e) {
                 inspect(`Failed to delete user doc ${_id} after changing username to ${model.username}`, e);
             }
@@ -103,7 +103,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const model = req.validatedBody as { username: string };
             let user: User;
 
-            if (!users.exists(model.username.toLowerCase())) {
+            if (!UserDb.exists(model.username.toLowerCase())) {
                 // Do not let the client know that the username does not exist.
 
                 return next();
@@ -163,9 +163,9 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
                 return next(boom.unauthorized("Token has expired."));
             }
 
-            let user = await users.get(token.username.toLowerCase());
+            let user = await UserDb.get(token.username.toLowerCase());
             user.hashed_password = hashSync(payload.new_password);
-            user = await users.put(user._id, user, user._rev);
+            user = await UserDb.put(user._id, user, user._rev);
 
             res.json({});
 
@@ -183,7 +183,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         }),
         handler: async function (req, res, next) {
             const payload = req.validatedBody as { old_password: string, new_password: string };
-            let user = await users.get(req.user._id);
+            let user = await UserDb.get(req.user._id);
 
             // Ensure the user's current password is correct
             if (!compareSync(payload.old_password, user.hashed_password)) {
@@ -194,7 +194,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             user.hashed_password = hashSync(payload.new_password);
 
             try {
-                user = await users.put(user._id, user, user._rev);
+                user = await UserDb.put(user._id, user, user._rev);
             } catch (e) {
                 inspect("Failed to update user's password.", e);
 
