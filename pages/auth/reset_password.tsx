@@ -1,7 +1,7 @@
 import * as qs from "qs";
 import * as React from 'react';
-import { theme } from "../../client";
 import Box from "../../components/box";
+import Theme from "../../modules/theme";
 import Router from "./../../components/router";
 import { APP_NAME } from "../../modules/constants";
 import { Users, ApiError } from "../../modules/api";

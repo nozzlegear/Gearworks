@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { theme } from "../../client";
 import Box from "../../components/box";
+import Theme from "../../modules/theme";
 import Router from "../../components/router";
 import { APP_NAME } from "../../modules/constants";
 import { Users, ApiError } from "../../modules/api";
@@ -106,7 +106,7 @@ export default class ForgotPasswordPage extends Router<IProps, IState> {
                     description="Your password reset request has been sent. Please allow up to 10 minutes for it to arrive, and be sure you check your spam or junk mail folder."
                     error={error}>
                     <div style={{ paddingTop: "40px", paddingBottom: "40px", textAlign: "center" }}>
-                        <EmailIcon style={{ height: "125px", width: "125px", color: theme.rawTheme.palette.primary1Color }} />
+                        <EmailIcon style={{ height: "125px", width: "125px", color: Theme.rawTheme.palette.primary1Color }} />
                     </div>
                 </Box>
             );

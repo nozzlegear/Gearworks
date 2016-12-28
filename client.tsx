@@ -10,7 +10,7 @@ import Paths, { getPathRegex } from "./modules/paths";
 import { Router, Redirect, Link, Route, IndexRoute, browserHistory, RouterContext } from "react-router";
 
 // Stores
-import { Auth as AuthStore } from "./stores";
+import { Auth as AuthStore, Dashboard as DashboardStore } from "./stores";
 
 // Layout components
 import Navbar from "./components/nav";
@@ -33,17 +33,8 @@ import HomePage from "./pages/home";
 import AccountPage from "./pages/account";
 
 // Styles
-import baseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
-import getMuiTheme from 'material-ui/styles/getMuiTheme';
-require("purecss/build/pure.css");
-require("purecss/build/grids-responsive.css");
-require("typebase.css/typebase.css");
-require("css/theme.styl");
-require("css/error.styl");
-require("css/utilities.styl");
-
-export const theme = getMuiTheme(baseTheme);
+import Theme from "./modules/theme";
 
 // Main app component
 export default function Main(props) {
@@ -105,8 +96,8 @@ export function MinimalMain(props) {
     }
 
     const routes = (
-        <Provider {...{ auth: AuthStore }}>
-            <MuiThemeProvider muiTheme={theme}>
+        <Provider {...{ auth: AuthStore, dashboard: DashboardStore }}>
+            <MuiThemeProvider muiTheme={Theme}>
                 <Router history={browserHistory}>
                     <Route component={Main}>
                         <Route onEnter={checkAuthState(true)} >

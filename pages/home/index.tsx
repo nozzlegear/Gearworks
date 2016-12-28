@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { theme } from "../../client";
 import { observer } from "mobx-react";
 import { Models } from "shopify-prime";
+import Theme from "../../modules/theme";
 import Router from "../../components/router";
 import { Auth, Dashboard } from "../../stores";
 import NewOrderDialog from "./new_order_dialog";
@@ -220,7 +220,7 @@ export default class HomePage extends Router<IProps, IState> {
 
         if (this.state.selectedRows && this.state.selectedRows.length > 0) {
             const order: Models.Order = Dashboard.orders[this.state.selectedRows[0]];
-            const rawTheme = theme.rawTheme.palette;
+            const rawTheme = Theme.rawTheme.palette;
             const toolbarStyle = {
                 backgroundColor: rawTheme.primary2Color,
                 borderColor: rawTheme.borderColor,

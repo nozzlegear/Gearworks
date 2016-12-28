@@ -23,26 +23,6 @@ async function startServer(hostname: string, port: number, securePort: number) {
         next();
     });
 
-    if (process.argv.some(arg => arg === "--dev")) {
-        // Create a webpack dev server
-        const config = require(path.resolve(__dirname, "..", "webpack.config"));
-        const webpack = require("webpack");
-        const compiler = webpack(config);
-
-        app.use(require('webpack-dev-middleware')(compiler, {
-            publicPath: config.output.publicPath,
-            noInfo: true,
-            watchOptions: {
-                poll: true
-            },
-            stats: {
-                colors: true
-            }
-        }));
-
-        app.use(require('webpack-hot-middleware')(compiler));
-    }
-
     // Any request to the /dist or /images paths should serve static files.
     app.use("/dist", express.static("dist"));
     app.use("/images", express.static("images"));

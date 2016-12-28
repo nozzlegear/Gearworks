@@ -20,6 +20,7 @@ import {
 
 declare const emit: any;
 
+const snakedAppName = snakeCase(APP_NAME.toLowerCase());
 const defaultListView = {
     "name": "all",
     "map": function (doc) { emit(doc._id, doc); }.toString(),
@@ -27,7 +28,7 @@ const defaultListView = {
 }
 
 const UsersDatabaseInfo: DatabaseConfiguration = {
-    name: `${snakeCase(APP_NAME)}_users`,
+    name: `${snakedAppName}_users`,
     indexes: ["shopify_access_token", "password_reset_token", "shop_id"],
     designDocs: [
         {

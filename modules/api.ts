@@ -109,11 +109,11 @@ export class Shopify extends BaseService {
         super("/api/v1/integrations/shopify", authToken);
     }
 
-    public createAuthorizationUrl = (data: { shop_domain: string; redirect_url: string }) => this.sendRequest<{ url: string }>("url", "GET", data);
+    public createAuthorizationUrl = (data: { shop_domain: string; redirect_url: string }) => this.sendRequest<{ url: string }>("url", "GET", undefined, data);
 
     public authorize = (data: { code: string, shop: string, hmac: string, state?: string }, fullQueryString: string) => this.sendRequest<SessionTokenResponse>(`authorize?${fullQueryString.replace(/^\?/, "")}`, "POST", data);
 
-    public listOrders = (data: { limit?: number; page?: number; } = {}) => this.sendRequest<Order[]>(`orders`, "GET", data);
+    public listOrders = (data: { limit?: number; page?: number; } = {}) => this.sendRequest<Order[]>(`orders`, "GET", undefined, data);
 
     public getOrder = (id: number | string) => this.sendRequest<Order>(`orders/${id}`, "GET");
 
