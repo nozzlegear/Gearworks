@@ -1,17 +1,19 @@
-import * as joi from "joi";
-import * as boom from "boom";
-import inspect from "logspect";
-import { Express } from "express";
-import { compareSync } from "bcryptjs";
-import { UserDb } from "../../modules/database";
-import { RouterFunction, User } from "gearworks";
-import { deleteCacheValue } from "../../modules/cache";
+import * as boom from 'boom';
+import * as Cache from 'gearworks-cache';
+import * as joi from 'joi';
+import inspect from 'logspect';
+import { CACHE_SEGMENT_AUTH } from '../../modules/constants';
+import { compareSync } from 'bcryptjs';
+import { Express } from 'express';
+import { RouterFunction } from 'gearworks-route/bin';
+import { User } from 'gearworks';
+import { UserDb } from '../../modules/database';
 
 export const BASE_PATH = "/api/v1/sessions/";
 
 export const PATH_REGEX = /\/api\/v1\/sessions*?/i;
 
-export default function registerRoutes(app: Express, route: RouterFunction) {
+export default function registerRoutes(app: Express, route: RouterFunction<User>) {
     route({
         method: "post",
         path: BASE_PATH,
@@ -40,7 +42,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             // The user has logged in again, so we'll remove their user id from the auth-invalidation cache.
             try {
-                await deleteCacheValue("auth-invalidation", user._id);
+                await Cache.deleteValue(CACHE_SEGMENT_AUTH, user._id);
             } catch (e) {
                 inspect(`Failed to remove user ${user._id} from auth-invalidation cache.`, e);                
             }

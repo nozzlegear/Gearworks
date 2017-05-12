@@ -1,9 +1,10 @@
-import inspect from "logspect";
-import { resolve } from "path";
-import { snakeCase } from "lodash";
-import isBrowser from "is-in-browser";
-import { Enums } from "shopify-prime";
-import { v4 as guid } from "node-uuid";
+import inspect from 'logspect';
+import isBrowser from 'is-in-browser';
+import { Enums } from 'shopify-prime';
+import { resolve } from 'path';
+import { snakeCase } from 'lodash';
+import { User } from 'gearworks';
+import { v4 as guid } from 'node-uuid';
 
 // NODE_ENV is injected by webpack for the browser client.
 declare const NODE_ENV: string;
@@ -12,8 +13,10 @@ const env = process && process.env || {};
 
 export const APP_NAME = "Gearworks";
 
-function get(baseKey: string, defaultValue = undefined) {
-    const snakedAppName = snakeCase(APP_NAME).toUpperCase();
+export const SNAKED_APP_NAME = snakeCase(APP_NAME.toLowerCase());
+
+function get(baseKey: string, defaultValue = undefined): string {
+    const snakedAppName = SNAKED_APP_NAME.toUpperCase();
     const snakedKey = snakeCase(baseKey).toUpperCase();
 
     return env[`${snakedAppName}_${snakedKey}`] || env[`GEARWORKS_${snakedKey}`] || env[snakedKey] || defaultValue;
@@ -37,6 +40,8 @@ export const ISLIVE = env.NODE_ENV === "production" || (isBrowser && NODE_ENV ==
 
 export const AUTH_HEADER_NAME = "x-gearworks-token";
 
+export const CACHE_SEGMENT_AUTH = "auth-invalidation";
+
 /**
  * A list of Shopify authorization scopes that will be requested from the user during app installation.
  */
@@ -45,7 +50,7 @@ export const DEFAULT_SCOPES: Enums.AuthScope[] = ["read_orders", "write_orders"]
 /**
  * A list of properties on a user or sessiontoken object that will be automatically sealed and unsealed by Iron.
  */
-export const SEALABLE_USER_PROPERTIES = ["shopify_access_token"];
+export const SEALABLE_USER_PROPERTIES: (keyof User)[] = ["shopify_access_token"];
 
 if (!isBrowser) {
     if (!JWT_SECRET_KEY) {

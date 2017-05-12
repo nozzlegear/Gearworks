@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { Link } from "react-router";
-import store from "../../stores/auth";
-import Box from "../../components/box";
-import { SessionToken } from "gearworks";
-import Router from "../../components/router";
-import { APP_NAME } from "../../modules/constants";
-import { ApiError, Users } from "../../modules/api";
-import { TextField, RaisedButton, FontIcon } from "material-ui";
+import Box from '../../components/box';
+import Router from '../../components/router';
+import store from '../../stores/auth';
+import { ApiError, Users } from '../../modules/api';
+import { APP_NAME } from '../../modules/constants';
+import { FontIcon, RaisedButton, TextField } from 'material-ui';
+import { Link } from 'react-router';
 
 export interface IProps {
 

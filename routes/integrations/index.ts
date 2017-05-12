@@ -1,20 +1,34 @@
-import * as qs from "qs";
-import * as joi from "joi";
-import * as boom from "boom";
-import inspect from "logspect";
-import { Express } from "express";
-import { UserDb } from "../../modules/database";
-import { RouterFunction, User } from "gearworks";
-import { CreateOrderRequest } from "gearworks/requests";
-import { BASE_PATH as WEBHOOKS_BASE_PATH } from "../webhooks";
-import { Auth, Shops, Webhooks, Models, ScriptTags, Orders } from "shopify-prime";
-import { DEFAULT_SCOPES, SHOPIFY_API_KEY, SHOPIFY_SECRET_KEY, ISLIVE, APP_NAME } from "../../modules/constants";
+import * as boom from 'boom';
+import * as joi from 'joi';
+import * as qs from 'qs';
+import inspect from 'logspect';
+import {
+    APP_NAME,
+    DEFAULT_SCOPES,
+    ISLIVE,
+    SHOPIFY_API_KEY,
+    SHOPIFY_SECRET_KEY
+    } from '../../modules/constants';
+import {
+    Auth,
+    Models,
+    Orders,
+    ScriptTags,
+    Shops,
+    Webhooks
+    } from 'shopify-prime';
+import { BASE_PATH as WEBHOOKS_BASE_PATH } from '../webhooks';
+import { CreateOrderRequest } from 'gearworks/requests';
+import { Express } from 'express';
+import { RouterFunction } from 'gearworks-route/bin';
+import { User } from 'gearworks';
+import { UserDb } from '../../modules/database';
 
 export const BASE_PATH = "/api/v1/integrations/";
 
 export const PATH_REGEX = /\/api\/v1\/integrations*?/i;
 
-export default function registerRoutes(app: Express, route: RouterFunction) {
+export default function registerRoutes(app: Express, route: RouterFunction<User>) {
     route({
         method: "get",
         path: BASE_PATH + "shopify/url",

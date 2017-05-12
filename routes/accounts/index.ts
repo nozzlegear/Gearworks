@@ -1,14 +1,21 @@
-import * as joi from "joi";
-import * as boom from "boom";
-import inspect from "logspect";
-import { Express } from "express";
-import { createTransport } from "nodemailer";
-import { RouterFunction, User } from "gearworks";
-import { hashSync, compareSync } from "bcryptjs";
-import { UserDb } from "./../../modules/database";
-import { seal, unseal } from "../../modules/encryption";
-import { RecurringCharges, Models } from "shopify-prime";
-import { ISLIVE, EMAIL_DOMAIN, APP_NAME, SPARKPOST_API_KEY } from "../../modules/constants";
+import * as boom from 'boom';
+import * as joi from 'joi';
+import inspect from 'logspect';
+import {
+    APP_NAME,
+    EMAIL_DOMAIN,
+    IRON_PASSWORD,
+    ISLIVE,
+    SPARKPOST_API_KEY
+    } from '../../modules/constants';
+import { compareSync, hashSync } from 'bcryptjs';
+import { createTransport } from 'nodemailer';
+import { Express } from 'express';
+import { Models, RecurringCharges } from 'shopify-prime';
+import { RouterFunction } from 'gearworks-route/bin';
+import { seal, unseal } from 'iron-async';
+import { User } from 'gearworks';
+import { UserDb } from './../../modules/database';
 
 export const BASE_PATH = "/api/v1/accounts/";
 
@@ -19,7 +26,7 @@ interface ResetToken {
     username: string;
 }
 
-export default function registerRoutes(app: Express, route: RouterFunction) {
+export default function registerRoutes(app: Express, route: RouterFunction<User>) {
     route({
         method: "post",
         path: BASE_PATH,
@@ -72,7 +79,8 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             try {
                 // CouchDB does not allow modifying a doc's id, so we copy the user to a new document instead.
-                user = await UserDb.copy(_id, user, model.username.toLowerCase());
+                const copyResult = await UserDb.copy(_id, model.username.toLowerCase());
+                const user = await UserDb.get(copyResult.id);
             } catch (e) {
                 inspect("Failed to copy user model to new id.", e);
 
@@ -112,7 +120,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
             const token = await seal({
                 exp: Date.now() + ((1000 * 60) * 90), // 90 minutes in milliseconds
                 username: model.username,
-            } as ResetToken);
+            } as ResetToken, IRON_PASSWORD);
 
             const url = `${req.domainWithProtocol}/auth/reset-password?token=${encodeURIComponent(token)}`;
             const message = {
@@ -156,7 +164,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
         }),
         handler: async function (req, res, next) {
             const payload = req.validatedBody as { new_password: string, reset_token: string };
-            const token = await unseal(payload.reset_token) as ResetToken;
+            const token = await unseal<ResetToken>(payload.reset_token, IRON_PASSWORD);
 
             if (token.exp < Date.now()) {
                 // Token has expired

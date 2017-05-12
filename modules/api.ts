@@ -1,11 +1,10 @@
-import inspect from "logspect";
-import isOkay from "./axios_utils";
-import { Models } from "shopify-prime";
-import { resolve, reject } from "bluebird";
-import Axios, { AxiosResponse } from "axios";
-import { AUTH_HEADER_NAME } from "./constants";
-import { SessionToken, CouchResponse } from "gearworks";
-import { CreateOrderRequest } from "gearworks/requests";
+import Axios, { AxiosResponse } from 'axios';
+import inspect from 'logspect';
+import isOkay from './axios_utils';
+import { AUTH_HEADER_NAME } from './constants';
+import { CreateOrderRequest } from 'gearworks/requests';
+import { Models } from 'shopify-prime';
+import { reject, resolve } from 'bluebird';
 
 // Interfaces
 import Order = Models.Order;

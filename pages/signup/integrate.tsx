@@ -1,11 +1,10 @@
 import * as React from 'react';
-import store from "../../stores/auth";
-import Box from "../../components/box";
-import { SessionToken } from "gearworks";
-import Router from "../../components/router";
-import { APP_NAME } from "../../modules/constants";
-import { ApiError, Shopify } from "../../modules/api";
-import { TextField, RaisedButton, FontIcon } from "material-ui";
+import Box from '../../components/box';
+import Router from '../../components/router';
+import store from '../../stores/auth';
+import { ApiError, Shopify } from '../../modules/api';
+import { APP_NAME } from '../../modules/constants';
+import { FontIcon, RaisedButton, TextField } from 'material-ui';
 
 export interface IProps {
 

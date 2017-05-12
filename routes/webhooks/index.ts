@@ -1,16 +1,18 @@
-import * as joi from "joi";
-import * as boom from "boom";
-import inspect from "logspect";
-import { Express } from "express";
-import { UserDb } from "../../modules/database";
-import { RouterFunction, User } from "gearworks";
-import { setCacheValue } from "../../modules/cache";
+import * as boom from 'boom';
+import * as Cache from 'gearworks-cache';
+import * as joi from 'joi';
+import inspect from 'logspect';
+import { CACHE_SEGMENT_AUTH } from '../../modules/constants';
+import { Express } from 'express';
+import { RouterFunction } from 'gearworks-route/bin';
+import { User } from 'gearworks';
+import { UserDb } from '../../modules/database';
 
 export const BASE_PATH = "/api/v1/webhooks/";
 
 export const PATH_REGEX = /\/api\/v1\/webhooks*?/i;
 
-export default function registerRoutes(app: Express, route: RouterFunction) {
+export default function registerRoutes(app: Express, route: RouterFunction<User>) {
     route({
         path: BASE_PATH + "app-uninstalled",
         method: "all",
@@ -47,7 +49,7 @@ export default function registerRoutes(app: Express, route: RouterFunction) {
 
             // Add the user's id to the auth-invalidation cache, forcing their next request to prompt them to login again.
             try {
-                await setCacheValue("auth-invalidation", user._id, true, 21 * 1000 * 60 * 60 * 24 /* 21 days in milliseconds */);
+                await Cache.setValue(CACHE_SEGMENT_AUTH, user._id, true, 21 * 1000 * 60 * 60 * 24 /* 21 days in milliseconds */);
             }
             catch (e) {
                 inspect("Failed to delete user data from auth cache after handling app/uninstalled webhook.", e);

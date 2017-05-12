@@ -1,8 +1,8 @@
-import { uniqueId } from "lodash";
-import { findIndex } from "lodash"; 
-import { Models } from "shopify-prime";
-import { CouchResponse } from "gearworks";
-import { observable, action } from "mobx";
+import { action, observable } from 'mobx';
+import { findIndex } from 'lodash';
+import { Models } from 'shopify-prime';
+import { uniqueId } from 'lodash';
+ 
 
 export class DashboardStore {
     constructor() {
