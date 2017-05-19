@@ -1,6 +1,7 @@
 import * as boom from 'boom';
-import * as joi from 'joi';
+import * as gwv from 'gearworks-validation';
 import * as qs from 'qs';
+import * as Requests from 'gearworks/requests/integrations';
 import inspect from 'logspect';
 import {
     APP_NAME,
@@ -18,7 +19,6 @@ import {
     Webhooks
     } from 'shopify-prime';
 import { BASE_PATH as WEBHOOKS_BASE_PATH } from '../webhooks';
-import { CreateOrderRequest } from 'gearworks/requests';
 import { Express } from 'express';
 import { RouterFunction } from 'gearworks-route/bin';
 import { User } from 'gearworks';
@@ -33,20 +33,19 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "get",
         path: BASE_PATH + "shopify/url",
         requireAuth: true,
-        queryValidation: joi.object({
-            shop_domain: joi.string().required(),
-            redirect_url: joi.string().required(),
+        queryValidation: gwv.object<Requests.GetOauthUrl>({
+            shop_domain: gwv.string().required(),
+            redirect_url: gwv.string().required(),
         }).unknown(true),
         handler: async function (req, res, next) {
-            const url = req.validatedQuery.shop_domain;
-            const redirect = req.validatedQuery.redirect_url;
+            const query: Requests.GetOauthUrl = req.validatedQuery;
             const isValidUrl = await Auth.isValidShopifyDomain(req.validatedQuery.shop_domain);
 
             if (!isValidUrl) {
-                return next(boom.notAcceptable(`${url} is not a valid Shopify shop domain.`));
+                return next(boom.notAcceptable(`${query.shop_domain} is not a valid Shopify shop domain.`));
             }
 
-            const authUrl = await Auth.buildAuthorizationUrl(DEFAULT_SCOPES, req.validatedQuery.shop_domain, SHOPIFY_API_KEY, redirect);
+            const authUrl = await Auth.buildAuthorizationUrl(DEFAULT_SCOPES, req.validatedQuery.shop_domain, SHOPIFY_API_KEY, query.redirect_url);
 
             res.json({ url: authUrl });
 
@@ -59,14 +58,14 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         path: BASE_PATH + "shopify/authorize",
         requireAuth: true,
         validateShopifyRequest: true,
-        bodyValidation: joi.object({
-            code: joi.string().required(),
-            shop: joi.string().required(),
-            hmac: joi.string().required(),
-            state: joi.string()
+        bodyValidation: gwv.object<Requests.Authorize>({
+            code: gwv.string().required(),
+            shop: gwv.string().required(),
+            hmac: gwv.string().required(),
+            state: gwv.string()
         }).unknown(true),
         handler: async function (req, res, next) {
-            const model = req.validatedBody as { code: string, shop: string, hmac: string, state?: string };
+            const model: Requests.Authorize = req.validatedBody;
             let user: User;
 
             try {
@@ -126,10 +125,10 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "get",
         path: BASE_PATH + "shopify/orders",
         requireAuth: true,
-        queryValidation: joi.object({
-            limit: joi.number().default(50),
-            page: joi.number().greater(0).default(1),
-            status: joi.string().only("any").default("any"),
+        queryValidation: gwv.object<Requests.ListOrders>({
+            limit: gwv.number().default(50),
+            page: gwv.gt(0).default(1),
+            status: gwv.strings("any"),
         }).unknown(true),
         handler: async function (req, res, next) {
             const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
@@ -145,18 +144,18 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "post",
         path: BASE_PATH + "shopify/orders",
         requireAuth: true,
-        bodyValidation: joi.object({
-            city: joi.string().required(),
-            email: joi.string().required(),
-            line_item: joi.string().required(),
-            name: joi.string().required(),
-            quantity: joi.number().required(),
-            state: joi.string().required(),
-            street: joi.string().required(),
-            zip: joi.string().required(),
+        bodyValidation: gwv.object<Requests.CreateOrder>({
+            city: gwv.string().required(),
+            email: gwv.string().required(),
+            line_item: gwv.string().required(),
+            name: gwv.string().required(),
+            quantity: gwv.number().required(),
+            state: gwv.string().required(),
+            street: gwv.string().required(),
+            zip: gwv.string().required(),
         }),
         handler: async function (req, res, next) {
-            const model = req.validatedBody as CreateOrderRequest;
+            const model: Requests.CreateOrder = req.validatedBody;
             const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
             const order = await service.create({
                 billing_address: {
@@ -190,13 +189,13 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "post",
         path: BASE_PATH + "shopify/orders/:id/open",
         requireAuth: true,
-        paramValidation: joi.object({
-            id: joi.number().required()
+        paramValidation: gwv.object<Requests.OpenCloseDelete>({
+            id: gwv.number().required()
         }),
         handler: async function (req, res, next) {
-            const id = req.validatedParams.id as number;
+            const params: Requests.OpenCloseDelete = req.validatedParams;
             const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
-            const order = await service.open(id);
+            const order = await service.open(params.id);
 
             res.json(order);
 
@@ -208,13 +207,13 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "post",
         path: BASE_PATH + "shopify/orders/:id/close",
         requireAuth: true,
-        paramValidation: joi.object({
-            id: joi.number().required()
+        paramValidation: gwv.object<Requests.OpenCloseDelete>({
+            id: gwv.number().required()
         }),
         handler: async function (req, res, next) {
-            const id = req.validatedParams.id as number;
+            const params: Requests.OpenCloseDelete = req.validatedParams;
             const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
-            const order = await service.close(id);
+            const order = await service.close(params.id);
 
             res.json(order);
 
@@ -226,14 +225,14 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "delete",
         path: BASE_PATH + "shopify/orders/:id",
         requireAuth: true,
-        paramValidation: joi.object({
-            id: joi.number().required()
+        paramValidation: gwv.object<Requests.OpenCloseDelete>({
+            id: gwv.number().required()
         }),
         handler: async function (req, res, next) {
-            const id = req.validatedParams.id as number;
+            const params: Requests.OpenCloseDelete = req.validatedParams;
             const service = new Orders(req.user.shopify_domain, req.user.shopify_access_token);
 
-            await service.delete(id);
+            await service.delete(params.id);
 
             res.json({});
 

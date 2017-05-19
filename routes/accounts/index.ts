@@ -1,5 +1,6 @@
 import * as boom from 'boom';
-import * as joi from 'joi';
+import * as gwv from 'gearworks-validation';
+import * as Requests from 'gearworks/requests/accounts';
 import inspect from 'logspect';
 import {
     APP_NAME,
@@ -31,12 +32,12 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "post",
         path: BASE_PATH,
         requireAuth: false,
-        bodyValidation: joi.object({
-            username: joi.string().email().required(),
-            password: joi.string().min(6).max(100).required(),
+        bodyValidation: gwv.object<Requests.CreateOrUpdateAccount>({
+            username: gwv.string().email().required(),
+            password: gwv.string().min(6).max(100).required(),
         }),
         handler: async function (req, res, next) {
-            const model = req.validatedBody as { username: string, password: string };
+            const model: Requests.CreateOrUpdateAccount = req.validatedBody;
 
             if (await UserDb.exists(model.username.toLowerCase())) {
                 return next(boom.badData(`A user with that username already exists.`));
@@ -58,12 +59,12 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "put",
         path: BASE_PATH + "username",
         requireAuth: true,
-        bodyValidation: joi.object({
-            username: joi.string().email().required(),
-            password: joi.string().required(),
+        bodyValidation: gwv.object<Requests.CreateOrUpdateAccount>({
+            username: gwv.string().email().required(),
+            password: gwv.string().required(),
         }),
         handler: async function (req, res, next) {
-            const model = req.validatedBody as { username: string, password: string };
+            const model: Requests.CreateOrUpdateAccount = req.validatedBody;
 
             if (await UserDb.exists(model.username.toLowerCase())) {
                 return next(boom.badData(`A user with that username already exists.`));
@@ -104,11 +105,11 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "post",
         path: BASE_PATH + "password/forgot",
         requireAuth: false,
-        bodyValidation: joi.object({
-            username: joi.string().email().required()
+        bodyValidation: gwv.object<Requests.Username>({
+            username: gwv.string().email().required()
         }),
         handler: async function (req, res, next) {
-            const model = req.validatedBody as { username: string };
+            const model: Requests.Username = req.validatedBody;
             let user: User;
 
             if (!UserDb.exists(model.username.toLowerCase())) {
@@ -158,12 +159,12 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "post",
         path: BASE_PATH + "password/reset",
         requireAuth: false,
-        bodyValidation: joi.object({
-            new_password: joi.string().min(6).max(100).required(),
-            reset_token: joi.string().required(),
+        bodyValidation: gwv.object<Requests.ResetPassword>({
+            new_password: gwv.string().min(6).max(100).required(),
+            reset_token: gwv.string().required(),
         }),
         handler: async function (req, res, next) {
-            const payload = req.validatedBody as { new_password: string, reset_token: string };
+            const payload: Requests.ResetPassword = req.validatedBody;
             const token = await unseal<ResetToken>(payload.reset_token, IRON_PASSWORD);
 
             if (token.exp < Date.now()) {
@@ -185,12 +186,12 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "put",
         path: BASE_PATH + "password",
         requireAuth: true,
-        bodyValidation: joi.object({
-            old_password: joi.string().required(),
-            new_password: joi.string().min(6).max(100).required()
+        bodyValidation: gwv.object<Requests.UpdatePassword>({
+            old_password: gwv.string().required(),
+            new_password: gwv.string().min(6).max(100).required()
         }),
         handler: async function (req, res, next) {
-            const payload = req.validatedBody as { old_password: string, new_password: string };
+            const payload: Requests.UpdatePassword = req.validatedBody;
             let user = await UserDb.get(req.user._id);
 
             // Ensure the user's current password is correct

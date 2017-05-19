@@ -1,6 +1,7 @@
 import * as boom from 'boom';
 import * as Cache from 'gearworks-cache';
-import * as joi from 'joi';
+import * as gwv from 'gearworks-validation';
+import * as Requests from 'gearworks/requests/webhooks';
 import inspect from 'logspect';
 import { CACHE_SEGMENT_AUTH } from '../../modules/constants';
 import { Express } from 'express';
@@ -18,12 +19,18 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "all",
         requireAuth: false,
         validateShopifyWebhook: true,
+        queryValidation: gwv.object<Requests.AppUninstalled>({
+            shop_id: gwv.string(),
+            shop: gwv.string(),
+        }),
         handler: async function (req, res, next) {
-            const query = req.query as { shop_id: string, shop: string };
-            const userSearch = await UserDb.find({
+            const query: Requests.AppUninstalled = req.query;
+            const userSearch = await UserDb.find({ 
                 selector: {
-                    shopify_shop_id: parseInt(query.shop_id)
-                } as User
+                    shopify_shop_id: {
+                        $eq: parseInt(query.shop_id)
+                    }
+                }
             });
 
             if (userSearch.length === 0) {

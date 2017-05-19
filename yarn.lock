@@ -972,6 +972,12 @@ gearworks-route@^1.3.1:
     logspect "^1.0.2"
     shopify-prime "^2.3.1"
 
+gearworks-validation@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/gearworks-validation/-/gearworks-validation-1.0.0.tgz#0d8f8f75f6b6bf303c207ceeb9879a68d649e3b6"
+  dependencies:
+    joi "^10.4.2"
+
 generate-function@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/generate-function/-/generate-function-2.0.0.tgz#6858fe7c0969b7d4e9093337647ac79f60dfbe74"
@@ -1334,9 +1340,9 @@ jodid25519@^1.0.0:
   dependencies:
     jsbn "~0.1.0"
 
-joi@10.x.x:
-  version "10.4.1"
-  resolved "https://registry.yarnpkg.com/joi/-/joi-10.4.1.tgz#a2fca1f0d603d1b843f2c1e086b52461f6be1f36"
+joi@10.x.x, joi@^10.4.2:
+  version "10.5.0"
+  resolved "https://registry.yarnpkg.com/joi/-/joi-10.5.0.tgz#4e3172a199c993b36aabe5a987b00b1b541c3059"
   dependencies:
     hoek "4.x.x"
     isemail "2.x.x"
@@ -1346,15 +1352,6 @@ joi@10.x.x:
 joi@8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/joi/-/joi-8.1.0.tgz#5a19094cce68009ce11831f3bad3a1e1e0afa2d1"
-  dependencies:
-    hoek "4.x.x"
-    isemail "2.x.x"
-    moment "2.x.x"
-    topo "2.x.x"
-
-joi@^8.1.0:
-  version "8.4.2"
-  resolved "https://registry.yarnpkg.com/joi/-/joi-8.4.2.tgz#bd7774658fe99058d8994ed1d4b9962484ebb859"
   dependencies:
     hoek "4.x.x"
     isemail "2.x.x"
@@ -2449,9 +2446,9 @@ typebase.css:
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/typebase.css/-/typebase.css-0.5.0.tgz#9f047bf8df09d1ea3931c03fe42034b897a98f90"
 
-typescript@^2.1.4:
-  version "2.1.4"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.4.tgz#b53b69fb841126acb1dd4b397d21daba87572251"
+typescript@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.3.2.tgz#f0f045e196f69a72f06b25fd3bd39d01c3ce9984"
 
 ua-parser-js@^0.7.9:
   version "0.7.10"

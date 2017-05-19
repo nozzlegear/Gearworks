@@ -1,6 +1,7 @@
 import * as boom from 'boom';
 import * as Cache from 'gearworks-cache';
-import * as joi from 'joi';
+import * as gwv from 'gearworks-validation';
+import * as Requests from "gearworks/requests/sessions";
 import inspect from 'logspect';
 import { CACHE_SEGMENT_AUTH } from '../../modules/constants';
 import { compareSync } from 'bcryptjs';
@@ -18,12 +19,12 @@ export default function registerRoutes(app: Express, route: RouterFunction<User>
         method: "post",
         path: BASE_PATH,
         requireAuth: false,
-        bodyValidation: joi.object({
-            username: joi.string().required(),
-            password: joi.string().required(),
+        bodyValidation: gwv.object<Requests.CreateSession>({
+            username: gwv.string().required(),
+            password: gwv.string().required(),
         }),
         handler: async function (req, res, next) {
-            const model = req.validatedBody as { username: string, password: string };
+            const model: Requests.CreateSession = req.validatedBody;
             let user: User;
 
             try {
