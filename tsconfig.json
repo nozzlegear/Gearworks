@@ -6,10 +6,14 @@
         "sourceMap": false,
         "outDir": "bin",
         "jsx": "react",
-        "experimentalDecorators": true
+        "skipLibCheck": true,
+        "experimentalDecorators": true,
+        "typeRoots": [
+            "node_modules/@types",
+            "src/typings"
+        ]
     },
     "exclude": [
-        "old_views",
         "node_modules"
     ]
 }

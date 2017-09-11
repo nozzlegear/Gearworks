@@ -5,6 +5,6 @@ gulp/ linguist-vendored
 gulp/* linguist-vendored
 gulp/*.js linguist-vendored
 bin/ linguist-vendored
-css linguist-vendored
-css/ linguist-vendored
-css/* linguist-vendored
+src/client/css linguist-vendored
+src/client/css/ linguist-vendored
+src/client/css/* linguist-vendored
