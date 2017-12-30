@@ -1,22 +1,22 @@
+import * as BrowserConstants from '../shared/constants';
 import * as Cache from 'gearworks-cache';
-import * as Constants from '../shared/constants';
 import * as Databases from './database';
+import * as databases from './database';
 import * as express from 'express';
 import * as http from 'http';
 import * as httpsRedirect from 'redirect-https';
 import * as path from 'path';
 import * as routeConfigurations from './routes';
+import * as ServerConstants from '../shared/server.constants';
 import getRouter from 'gearworks-route/bin';
 import inspect from 'logspect';
 import { BoomError, notFound, wrap } from 'boom';
 import { configureDatabase, DatabaseConfiguration } from 'davenport/bin';
 import { importToArray } from 'import-to-array';
 import { User } from 'app';
+import Bundler = require("parcel-bundler");
 
-// This is injected by Webpack during the build process. Unfortunately necessary because
-// Zeit's pkg tool has a bug that makes it impossible to call .toString() on a function and
-// get its source code, which we use in the CouchDB views.
-declare const _DB_CONFIGURATIONS: DatabaseConfiguration<any>[];
+const Constants = { ...BrowserConstants, ...ServerConstants };
 
 async function startServer(hostname: string, port: number) {
     const app = express();
@@ -37,9 +37,16 @@ async function startServer(hostname: string, port: number) {
     // rather than the internal protocol used by the proxy.
     app.enable("trust proxy");
 
-    // Redirect http requests to https when live
     if (Constants.ISLIVE) {
+        // Redirect http requests to https when live
         app.use(httpsRedirect());
+    } else {
+        // Run Parcel bundler for client development
+        const bundler = new Bundler(path.resolve(__dirname, "../client/index.html"))
+        // Bugfix: parcel bundler must call bundle at least once before using middleware
+        // https://github.com/parcel-bundler/parcel/issues/442
+        await bundler.bundle();
+        app.use(bundler.middleware());
     }
 
     // Prepare the router
@@ -68,6 +75,7 @@ async function startServer(hostname: string, port: number) {
     });
 
     // Configure the server, cache, databases and routes
+    const _DB_CONFIGURATIONS: DatabaseConfiguration<any>[] = importToArray(databases).map(db => db.Config)
     const httpServer = http.createServer(app).listen(port, hostname);
     await Cache.initialize();
     await Promise.all(Object.keys(_DB_CONFIGURATIONS)
@@ -86,7 +94,7 @@ async function startServer(hostname: string, port: number) {
             throw notFound();
         }
 
-        res.sendFile(path.join(__dirname, "..", "index.html"));
+        res.sendFile(path.join(__dirname, "../client/index.html"));
     })
 
     // Typescript type guard for boom errors
