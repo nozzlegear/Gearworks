@@ -138,6 +138,7 @@ export function MinimalMain(props) {
         // There exists a bug in react-router, of course, that throws errors when trying to use HMR saying it won't
         // let you change the router's routes. To workaround, you must both use `routes={routes}` (rather than <Router><Route .../><Route .../></Router>)
         // *and* rerender the router from a function. You can't just render once and reuse it.
+        // https://stackoverflow.com/a/38364501
         <Provider>
             <MuiThemeProvider muiTheme={THEME}>
                 <AppContainer>
